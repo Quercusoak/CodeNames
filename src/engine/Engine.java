@@ -1,7 +1,7 @@
 package engine;
 
 
-import jar.GameParams;
+import ODT.FileParams;
 
 public interface Engine
 {
@@ -9,7 +9,7 @@ public interface Engine
     void readGameFile(String XMLpath);
 
     /*Only displayed when file successfully loaded*/
-    GameParams displayGameParameters();
+    FileParams displayGameParameters();
 
     void startGame();
 }

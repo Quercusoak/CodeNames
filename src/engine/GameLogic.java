@@ -1,7 +1,7 @@
 package engine;
 
 import Exceptions.*;
-import jar.GameParams;
+import ODT.FileParams;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -9,19 +9,18 @@ import javax.xml.bind.Unmarshaller;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import ODT.GameBoard;
 import engine.jaxb.generated.ECNGame;
 
 public class GameLogic implements Engine {
 
     private GameData gameData = null;
+    private GameSession game;
 
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n]";
@@ -104,38 +103,37 @@ public class GameLogic implements Engine {
 
         /*Keep sets of all gameWords and blackGameWords, not just those in current game.*/
         gameData = new GameData();
-//        gameData.setAllPossibleWords(allWords);
-//        gameData.setAllPossibleBlackWords(allBlackWords);
-       /* gameData.setNumAllWords(numPossibleWords);
-        gameData.setNumAllBlackWords(numPossibleBlackWords);
-        gameData.setCardsCount(numCards);
-        gameData.setBlackCardsCount(numBlackCards);
-        gameData.setRows(rows);
-        gameData.setColumns(columns);*/
         gameData.addTeam(team1Name, team1NumCards);
         gameData.addTeam(team2Name, team2NumCards);
         gameData.setGameData(allWords,allBlackWords,numCards,numBlackCards,rows,columns);
 
     }
 
-    public GameParams displayGameParameters(){
+    public FileParams displayGameParameters(){
         if (gameData==null){
             throw new NoFileLoadedException();
         }
-        GameParams odt = new GameParams(gameData.getWordsDictionary().size(),  gameData.getBlackWordsDictionary().size(),
+        FileParams odt = new FileParams(gameData.getWordsDictionary().size(),  gameData.getBlackWordsDictionary().size(),
                 (gameData.getCardsCount() + gameData.getBlackCardsCount()), gameData.getTeams());
         return odt;
     }
 
     public void startGame(){
-        GameSession game = new GameSession(gameData.getRows(), gameData.getColumns(), gameData.getTeams());
+        game = new GameSession(gameData.getRows(), gameData.getColumns(), gameData.getTeams());
 
         /*Generate cards for game session*/
-        generateCards(game);
-        testShowWords(game);
+        generateCards();
+
+        /*Put cards in board*/
+        int i=0;
+        for (GameCard card : game.getCards()){
+            card.setCardNumber(i+1);
+            game.getBoard()[i / gameData.getColumns()][i % gameData.getColumns()]=card;
+            i++;
+        }
     }
 
-    private void generateCards(GameSession game){
+    private void generateCards(){
         /*Generate cards for game session*/
         boolean isBlack = true;
         Random rand = new Random();
@@ -165,20 +163,47 @@ public class GameLogic implements Engine {
         }
 
         /*Rest of words are neutral*/
-        IntStream.range(count+ gameData.getBlackCardsCount(),gameData.getCardsCount())
+        IntStream.range(count,gameData.getCardsCount())
                 .mapToObj(currGameCards::get)
                 .forEach(a->game.addCard(a,!isBlack));
     }
 
+    public GameBoard getGameBoard(){
+        if (gameData==null){
+            throw new NoFileLoadedException();
+        }
+        return new GameBoard(game.getBoard(), game.getCards(), gameData.getRows(), gameData.getColumns());
+    }
+
+
+
+
     /*FOR TEST PURPOSES!!!!*/
     private void testShowWords(GameSession game){
-        /*AtomicInteger i= new AtomicInteger(1);
-        currGameCards.stream().forEach(c->System.out.println((i.getAndIncrement())+") "+c));
-        AtomicInteger j= new AtomicInteger(1);
-        currGameBlackCards.stream().forEach(c->System.out.println((j.getAndIncrement())+") "+c));*/
         AtomicInteger i= new AtomicInteger(1);
         game.getCards().stream()
                 .forEach(c->System.out.println((i.getAndIncrement())+") "+c.getWord()+" "
                         +((c.getTeam()!=null) ? c.getTeam().getName() : (c.isBlack()?"Black":"Neutral"))));
+    }
+    private void testPrintBoard(GameSession game){
+        for (int i = 0; i < gameData.getRows(); i++) {
+            testPrintRows(game,i);
+        }
+    }
+    private void testPrintRows(GameSession game,int i){
+        int maxLength = game.getCards().stream()
+                .map(a->a.getWord())
+                .map(String::length)
+                .max(Integer::compare)
+                .get();
+        int j;
+        for (j = 0; j < gameData.getColumns(); j++) {
+            System.out.print(String.format("%-" + (maxLength+1) + "s", game.getBoard()[i][j].getWord()));
+        }
+        System.out.println();
+        for (j = 0; j < gameData.getColumns(); j++) {
+            System.out.print(String.format("%-" + (maxLength+1) + "s", "["+game.getBoard()[i][j].getCardNumber()+"]"));
+        }
+        System.out.println();
     }
 }

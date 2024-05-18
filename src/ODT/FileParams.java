@@ -1,4 +1,4 @@
-package jar;
+package ODT;
 
 import engine.Team;
 
@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class GameParams {
+public class FileParams {
     public int getGameWordsPossible() {
         return gameWordsPossible;
     }
@@ -29,7 +29,7 @@ public class GameParams {
     private Map<String, Integer> teams = new HashMap<>();
 
 
-    public GameParams(int gameWordsPossible, int blackWordsPossible, int numWords, Set<Team> teams){
+    public FileParams(int gameWordsPossible, int blackWordsPossible, int numWords, Set<Team> teams){
         this.gameWordsPossible = gameWordsPossible;
         this.blackWordsPossible =blackWordsPossible;
         this.numWords = numWords;
