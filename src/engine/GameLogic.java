@@ -1,6 +1,7 @@
 package engine;
 
 import Exceptions.*;
+import ODT.CurrentTeam;
 import ODT.FileParams;
 
 import javax.xml.bind.JAXBContext;
@@ -20,7 +21,7 @@ import engine.jaxb.generated.ECNGame;
 public class GameLogic implements Engine {
 
     private GameData gameData = null;
-    private GameSession game;
+    private GameSession game = null;
 
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n]";
@@ -174,6 +175,27 @@ public class GameLogic implements Engine {
         }
         return new GameBoard(game.getBoard(), game.getCards(), gameData.getRows(), gameData.getColumns());
     }
+
+    public CurrentTeam getCurrentTeam(){
+        if (game==null){
+            throw new GameInactiveException();
+        }
+        return new CurrentTeam(game.currTeamTurn);
+    }
+
+    @Override
+    public void playTurn() {
+        if (game==null){
+            throw new GameInactiveException();
+        }
+        /*Display current playing team*/
+        //game.currTeamTurn
+
+        /**/
+    }
+
+
+
 
 
 

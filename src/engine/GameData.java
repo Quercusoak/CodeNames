@@ -1,5 +1,6 @@
 package engine;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -7,7 +8,7 @@ import java.util.Set;
 public class GameData {
 
     public GameData(){
-        teams = new HashSet<>();
+        teams = new ArrayList<>();
     }
 
     private int cardsCount;
@@ -22,8 +23,8 @@ public class GameData {
     private int columns;
     public int getColumns() {return columns;}
 
-    private Set<Team> teams;
-    public Set<Team> getTeams() {
+    private List<Team> teams;
+    public List<Team> getTeams() {
         return teams;
     }
 

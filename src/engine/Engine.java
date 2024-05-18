@@ -12,4 +12,6 @@ public interface Engine
     FileParams displayGameParameters();
 
     void startGame();
+
+    void playTurn();
 }

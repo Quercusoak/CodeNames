@@ -1,10 +1,12 @@
-package engine;
+package ODT;
 
-public class Team {
-    public Team(String name, int numCards){
-        this.name=name;
-        numberOfCards=numCards;
-        score = 0;
+import engine.Team;
+
+public class CurrentTeam {
+    public CurrentTeam(Team t){
+        name=t.getName();
+        numberOfCards=t.getNumberOfCards();
+        score = t.getScore();
     }
 
     private String name;
