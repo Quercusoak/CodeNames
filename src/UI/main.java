@@ -3,6 +3,8 @@ package UI;
 import engine.GameLogic;
 import jar.GameParams;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class main {
     private final static String SUCCESS_MESSAGE = "File loaded successfully.";
     static GameLogic game = new GameLogic();

@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class GameParams {
-    public long getGameWordsPossible() {
+    public int getGameWordsPossible() {
         return gameWordsPossible;
     }
 
-    public long getBlackWordsPossible() {
+    public int getBlackWordsPossible() {
         return blackWordsPossible;
     }
 
@@ -23,13 +23,13 @@ public class GameParams {
         return teams;
     }
 
-    private long gameWordsPossible;
-    private long blackWordsPossible;
+    private int gameWordsPossible;
+    private int blackWordsPossible;
     private int numWords;
     private Map<String, Integer> teams = new HashMap<>();
 
 
-    public GameParams(long gameWordsPossible, long blackWordsPossible, int numWords, Set<Team> teams){
+    public GameParams(int gameWordsPossible, int blackWordsPossible, int numWords, Set<Team> teams){
         this.gameWordsPossible = gameWordsPossible;
         this.blackWordsPossible =blackWordsPossible;
         this.numWords = numWords;

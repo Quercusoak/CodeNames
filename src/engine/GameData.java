@@ -6,27 +6,21 @@ import java.util.Set;
 
 public class GameData {
 
-    public GameData(Set<String> allCards, Set<String> allBlackCards){
+    public GameData(){
         teams = new HashSet<>();
-        allPossibleWords = allCards;
-        allPossibleBlackWords = allBlackCards;
     }
 
     private int cardsCount;
     public int getCardsCount() {return cardsCount;}
-    public void setCardsCount(int cards_count){ cardsCount = cards_count;}
 
     private int blackCardsCount;
     public int getBlackCardsCount() { return blackCardsCount; }
-    public void setBlackCardsCount(int blackCardsCount) {this.blackCardsCount = blackCardsCount; }
 
     private int rows;
     public int getRows() { return rows;}
-    public void setRows(int rows) {this.rows = rows;}
 
     private int columns;
     public int getColumns() {return columns;}
-    public void setColumns(int columns) {this.columns = columns; }
 
     private Set<Team> teams;
     public Set<Team> getTeams() {
@@ -38,54 +32,25 @@ public class GameData {
         this.teams.add(t);
     }
 
-    public Set<String> getAllPossibleBlackWords() {
-        return allPossibleBlackWords;
+    public List<String> getBlackWordsDictionary() {
+        return blackWordsDictionary;
     }
 
-    public void setAllPossibleBlackWords(Set<String> allPossibleBlackWords) {
-        this.allPossibleBlackWords = allPossibleBlackWords;
+    public List<String> getWordsDictionary() {
+        return wordsDictionary;
     }
 
-    public Set<String> getAllPossibleWords() {
-        return allPossibleWords;
-    }
+    private List<String> wordsDictionary;
+    private List<String> blackWordsDictionary;
 
-    public void setAllPossibleWords(Set<String> allPossibleWords) {
-        this.allPossibleWords = allPossibleWords;
-    }
 
-    private Set<String> allPossibleWords;
-    private Set<String> allPossibleBlackWords;
-
-    private long numAllWords;
-    private long numAllBlackWords;
-
-    public long getNumAllWords() {
-        return numAllWords;
-    }
-
-    public void setNumAllWords(long numAllWords) {
-        this.numAllWords = numAllWords;
-    }
-
-    public long getNumAllBlackWords() {
-        return numAllBlackWords;
-    }
-
-    public void setNumAllBlackWords(long numAllBlackWords) {
-        this.numAllBlackWords = numAllBlackWords;
-    }
-
-    public void setGameData(int numPossibleWords, int numPossibleBlackWords, int numCards,
+    public void setGameData(List<String> allWords, List<String> allBlackWords, int numCards,
                             int numBlackCards, int rows, int columns){
-        setNumAllWords(numPossibleWords);
-        setNumAllBlackWords(numPossibleBlackWords);
-        setCardsCount(numCards);
-        setBlackCardsCount(numBlackCards);
-        setRows(rows);
-        setColumns(columns);
+        this.wordsDictionary = allWords;
+        this.blackWordsDictionary = allBlackWords;
+        this.cardsCount = numCards;
+        this.blackCardsCount = numBlackCards;
+        this.rows = rows;
+        this.columns =columns;
     }
-
-    /////////////////
-    public List<String> wordDictionary;
 }

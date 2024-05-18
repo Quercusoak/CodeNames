@@ -23,4 +23,13 @@ public class GameCard {
     public boolean isBlack() {
         return isBlack;
     }
+
+    public GameCard(String word, boolean isBlack){
+        this.word=word;
+        this.isBlack=isBlack;
+    }
+
+    public void setTeam(Team t){
+        team=t;
+    }
 }
