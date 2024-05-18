@@ -1,9 +1,9 @@
 package UI;
 
+import ODT.GameBoard;
 import engine.GameLogic;
-import jar.GameParams;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import ODT.FileParams;
+import engine.GameSession;
 
 public class main {
     private final static String SUCCESS_MESSAGE = "File loaded successfully.";
@@ -34,7 +34,7 @@ public class main {
     }
 
     public static void showGameParameters(){
-        GameParams odt = game.displayGameParameters();
+        FileParams odt = game.displayGameParameters();
         System.out.println("Number of possible words: " +odt.getGameWordsPossible());
         System.out.println("Number of possible black words: " +odt.getBlackWordsPossible());
         System.out.println("Number of words in game: " +odt.getNumWords());
@@ -43,5 +43,30 @@ public class main {
 
     public static void startGame(){
         game.startGame();
+        printBoard();
+    }
+
+    private static void printBoard(){
+        GameBoard b = game.getGameBoard();
+        int maxLength = b.getCards().stream()
+                .map(a->a.getWord())
+                .map(String::length)
+                .max(Integer::compare)
+                .get();
+        for (int i = 0; i < b.getRows(); i++) {
+            printBoardRow(b,i,maxLength);
+        }
+    }
+
+    private static void printBoardRow(GameBoard b, int i,int maxLength){
+        int j;
+        for (j = 0; j < b.getColumns(); j++) {
+            System.out.print(String.format("%-" + (maxLength+1) + "s", b.getBoard()[i][j].getWord()));
+        }
+        System.out.println();
+        for (j = 0; j < b.getColumns(); j++) {
+            System.out.print(String.format("%-" + (maxLength+1) + "s", "["+b.getBoard()[i][j].getCardNumber()+"]"));
+        }
+        System.out.println();
     }
 }
