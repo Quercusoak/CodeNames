@@ -5,6 +5,7 @@ public class Team {
         this.name=name;
         numberOfCards=numCards;
         score = 0;
+        numTurnsPlayed = 0;
     }
 
     private String name;
@@ -20,5 +21,17 @@ public class Team {
     private int score;
     public int getScore(){
         return score;
+    }
+
+    public void addPoint(){
+        score++;
+    }
+
+    private int numTurnsPlayed;
+    public int getNumTurnsPlayed() {
+        return numTurnsPlayed;
+    }
+    public void setNumTurnsPlayed(int numTurnsPlayed) {
+        this.numTurnsPlayed = numTurnsPlayed;
     }
 }

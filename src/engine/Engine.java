@@ -1,7 +1,7 @@
 package engine;
 
 
-import ODT.FileParams;
+import ODT.*;
 
 public interface Engine
 {
@@ -13,5 +13,9 @@ public interface Engine
 
     void startGame();
 
-    void playTurn();
+    TurnStatus playTurn(Integer cardNum);
+
+    GameBoard getGameBoard();
+
+    CurrentTeam getCurrentTeam();
 }

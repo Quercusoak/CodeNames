@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import ODT.GameBoard;
+import ODT.*;
 import engine.jaxb.generated.ECNGame;
 
 public class GameLogic implements Engine {
@@ -180,21 +180,56 @@ public class GameLogic implements Engine {
         if (game==null){
             throw new GameInactiveException();
         }
-        return new CurrentTeam(game.currTeamTurn);
+        return new CurrentTeam(game.getPlayingTeam());
     }
 
     @Override
-    public void playTurn() {
+    public TurnStatus playTurn(Integer cardNum) {
         if (game==null){
             throw new GameInactiveException();
         }
-        /*Display current playing team*/
-        //game.currTeamTurn
 
-        /**/
+        if (cardNum>game.getCards().size() || cardNum<0) {
+            throw new CardSelectionOutOfBound(game.getCards().size());
+        }
+
+        /*Change card status to found*/
+        GameCard card = game.getBoard()[cardNum / gameData.getColumns()][cardNum % gameData.getColumns()];
+        card.setFound();
+
+        /*Check whose card was guessed*/
+        TurnGuessStatus guessStatus;
+        Team teamWhoseCardItIs = null;
+        TurnStatus turnStatus;
+
+        if (card.getTeam()!=null) {
+            teamWhoseCardItIs = card.getTeam();
+            teamWhoseCardItIs.addPoint();
+            boolean isCurrTeamsCard = teamWhoseCardItIs.equals(game.getPlayingTeam());
+            if (teamWhoseCardItIs.getNumberOfCards() != teamWhoseCardItIs.getScore()) {
+                guessStatus = isCurrTeamsCard ? TurnGuessStatus.CURRENTTEAM : TurnGuessStatus.OTHERTEAM;
+            }
+            else{ //all words are found
+                guessStatus = isCurrTeamsCard ? TurnGuessStatus.VICTORYCURRENTTEAM : TurnGuessStatus.VICTORYOTHERTEAM;
+            }
+        }
+        else {
+            guessStatus = card.isBlack()? TurnGuessStatus.BLACK : TurnGuessStatus.NEUTRAL;
+        }
+
+        turnStatus = new TurnStatus(guessStatus,teamWhoseCardItIs);
+
+
+        /*Increment current team to next:*/
+        game.nextTeam();
+
+        return turnStatus;
     }
 
+    /*Check if game ended by victory or black card, else move to next team.*/
+    public void endOfTurnChecks(){
 
+    }
 
 
 
