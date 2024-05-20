@@ -4,13 +4,13 @@ import Exceptions.CardSelectionOutOfBound;
 import Exceptions.TurnQuit;
 import ODT.CurrentTeam;
 import ODT.GameBoard;
+import engine.Engine;
 import engine.GameCard;
 import engine.GameLogic;
 import ODT.FileParams;
 
-import java.util.InputMismatchException;
 import java.util.Scanner;
-import java.util.stream.Stream;
+
 
 public class main {
     private final static String SUCCESS_MESSAGE = "File loaded successfully.";
@@ -18,7 +18,7 @@ public class main {
     private final static String GET_PLAYERS_CARD_GUESS = "Input card number, or press q to end turn: ";
     private final static String QUIT_TURN = "q";
 
-    static GameLogic game = new GameLogic();
+    static Engine game = new GameLogic(); //engine is interface and game logic is implementation
 
     public static void main(String[] args) {
         readParamsFile();
@@ -38,7 +38,7 @@ public class main {
         //Scanner scanner = new Scanner(System.in);
         //String path = scanner.nextLine();
         try {
-            game.readGameFile("src/test/classic.xml");
+            game.readGameFile("src/Resources/classic.xml");
             System.out.println(SUCCESS_MESSAGE);
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
