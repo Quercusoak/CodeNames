@@ -25,12 +25,15 @@ public class GameLogic implements Engine {
 
     @Override
     public void readGameFile(String XMLpath) {
-        String extension = XMLpath.substring(XMLpath.lastIndexOf(".") , XMLpath.length());
-        if (extension.equals(".xml")) {
-            jaxbSchema(XMLpath);
-        }
-        else{
-            throw new RuntimeException("Not .xml file.");
+        try {
+            String extension = XMLpath.substring(XMLpath.lastIndexOf("."), XMLpath.length());
+            if (extension.equals(".xml")) {
+                jaxbSchema(XMLpath);
+            } else {
+                throw new FileNotXML();
+            }
+        }catch (IndexOutOfBoundsException  e){
+            throw new FileNotXML();
         }
     }
 
@@ -42,58 +45,64 @@ public class GameLogic implements Engine {
             ECNGame ecnGame = (ECNGame) jaxbUnmarshaller.unmarshal(inputStream);
             loadFileGameData(ecnGame);
         } catch (JAXBException e) {
-            throw new RuntimeException("File missing required fields.");
+            throw new FileInvalid();
         } catch (FileNotFoundException e){
-            throw new RuntimeException("File not found.");
-        } catch (NotEnoughWordsException e){
-            throw new RuntimeException(e.getMessage());
+            throw new FileNotFound();
         }
     }
 
     private void loadFileGameData(ECNGame ecnGame){
 
         /*Check if there are enough words to start game with specified card amount.*/
-        String[] possibleWordsStr = ecnGame.getECNWords().getECNGameWords().split(REGEX_TO_EXCLUDE_FROM_DICTIONARY);
-        List<String> allWords = Arrays.stream(possibleWordsStr)
+        List<String> allWords = Arrays.stream(ecnGame.getECNWords().getECNGameWords().split(REGEX_TO_EXCLUDE_FROM_DICTIONARY))
                 .filter(s -> !s.matches(REGEX_TO_EXCLUDE_FROM_DICTIONARY) && !s.isEmpty())
                 .distinct()
                 .collect(Collectors.toList());
+
         int numPossibleWords = allWords.size();
         int numCards =  ecnGame.getECNBoard().getCardsCount();
+        if (numPossibleWords <=0) {
+            throw new ZeroCards();
+        }
         if (numPossibleWords < numCards){
             throw new NotEnoughWordsException(numPossibleWords,numCards,false);
         }
 
         /*Check if there are enough black words to start game with specified black card amount.*/
-        List<String> allBlackWords = Arrays.stream(ecnGame.getECNWords()
-                .getECNBlackWords().split(REGEX_TO_EXCLUDE_FROM_DICTIONARY))
+        List<String> allBlackWords = Arrays.stream(ecnGame.getECNWords().getECNBlackWords().split(REGEX_TO_EXCLUDE_FROM_DICTIONARY))
                 .filter(a->!a.matches(REGEX_TO_EXCLUDE_FROM_DICTIONARY) && !a.isEmpty())
                 .distinct()
                 .collect(Collectors.toList());
+
         int numBlackCards = ecnGame.getECNBoard().getBlackCardsCount();
         if (allBlackWords.size() < numBlackCards){
             throw new NotEnoughWordsException(allBlackWords.size(),numBlackCards,true);
         }
 
         /*Verify sum cards of teams isn't larger than amount cards in game.*/
-        //How to make for more than 2 teams?
         int team1NumCards = ecnGame.getECNTeam1().getCardsCount();
         int team2NumCards = ecnGame.getECNTeam2().getCardsCount();
-        int numCardsinGame = numCards + numBlackCards;
-        if (team1NumCards + team2NumCards > numCardsinGame){
-            throw new NotEnoughCardsException(team1NumCards + team2NumCards, numCardsinGame);
+        if (team1NumCards + team2NumCards > numCards) {
+            throw new NotEnoughCardsException(team1NumCards + team2NumCards, numCards);
+        }
+        if (team1NumCards <=0 || team2NumCards <=0) {
+            throw new ZeroCards();
         }
 
         /*Verify rows x columns >= overall cards on board*/
         int rows = ecnGame.getECNBoard().getECNLayout().getRows();
         int columns = ecnGame.getECNBoard().getECNLayout().getColumns();
+        int numCardsinGame = numCards + numBlackCards;
         if ((rows*columns)<numCardsinGame){
             throw new GameLayoutException(rows,columns,numCardsinGame);
         }
 
-        /*Verify team names are unique*/
+        /*Verify team names are present unique*/
         String team1Name = ecnGame.getECNTeam1().getName();
         String team2Name = ecnGame.getECNTeam2().getName();
+        if (team1Name.isEmpty() || team2Name.isEmpty()){
+            throw new EmptyTeamName();
+        }
         if (team1Name.equals(team2Name)) {
             throw new NotUniqueTeamNames(team1Name);
         }
@@ -111,7 +120,7 @@ public class GameLogic implements Engine {
             throw new NoFileLoadedException();
         }
         return new FileParams(gameData.getWordsDictionary().size(),  gameData.getBlackWordsDictionary().size(),
-                (gameData.getCardsCount() + gameData.getBlackCardsCount()), gameData.getTeams());
+                gameData.getCardsCount() , gameData.getBlackCardsCount(), gameData.getTeams());
     }
 
     public void startGame(){
@@ -149,6 +158,11 @@ public class GameLogic implements Engine {
                 .filter(p -> !currGameCards.contains(p))
                 .collect(Collectors.toSet());
 
+        /*Check if there are enough black cards generated*/
+        if (currGameBlackCards.size() < gameData.getBlackCardsCount()){
+            throw new NotEnoughDistinctBlackCards(currGameBlackCards.size(),gameData.getBlackCardsCount());
+        }
+
         currGameBlackCards.forEach(a->game.addCard(a,isBlack));
 
         /*Assign to teams and create cards*/
@@ -171,7 +185,7 @@ public class GameLogic implements Engine {
         if (game==null){
             throw new GameInactiveException();
         }
-        return new DTOBoard(game.getBoard(), gameData.getRows(), gameData.getColumns());
+        return new DTOBoard(game.getBoard(), gameData.getRows(), gameData.getColumns(),game.getCards().size());
     }
 
     public DTOTeam getCurrentTeam(){
@@ -217,8 +231,12 @@ public class GameLogic implements Engine {
                 guessStatus = isCurrTeamsCard ? TurnGuessStatus.VICTORYCURRENTTEAM : TurnGuessStatus.VICTORYOTHERTEAM;
             }
         }
+        else if (card.isBlack()){
+            guessStatus = TurnGuessStatus.BLACK;
+            teamWhoseCardItIs = game.getPlayingTeam();
+        }
         else {
-            guessStatus = card.isBlack()? TurnGuessStatus.BLACK : TurnGuessStatus.NEUTRAL;
+            guessStatus = TurnGuessStatus.NEUTRAL;
         }
 
         return new TurnStatus(guessStatus,teamWhoseCardItIs);

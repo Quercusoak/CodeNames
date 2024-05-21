@@ -15,24 +15,30 @@ public class FileParams {
         return blackWordsPossible;
     }
 
-    public int getNumWords() {
-        return numWords;
+    public int getNumCards() {
+        return numCards;
     }
 
     public Map<String, Integer> getTeams() {
         return teams;
     }
 
+    public int getNumBlackCards() {
+        return numBlackCards;
+    }
+
     private int gameWordsPossible;
     private int blackWordsPossible;
-    private int numWords;
+    private int numCards;
+    private int numBlackCards;
     private Map<String, Integer> teams = new HashMap<>();
 
 
-    public FileParams(int gameWordsPossible, int blackWordsPossible, int numWords, List<Team> teams){
+    public FileParams(int gameWordsPossible, int blackWordsPossible, int numWords,int numBlack, List<Team> teams){
         this.gameWordsPossible = gameWordsPossible;
         this.blackWordsPossible =blackWordsPossible;
-        this.numWords = numWords;
+        this.numCards = numWords;
+        numBlackCards =numBlack;
         teams.forEach(team ->this.teams.put(team.getName(),team.getNumberOfCards()));
     }
 }

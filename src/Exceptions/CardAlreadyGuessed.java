@@ -3,13 +3,13 @@ package Exceptions;
 import engine.GameCard;
 
 public class CardAlreadyGuessed extends RuntimeException {
-    private String msg;
+    private String cardWord;
 
-    public String getMessage() {
-        return msg;
+    public String getWord() {
+        return cardWord;
     }
 
     public CardAlreadyGuessed(GameCard card){
-        msg = card.getWord()+ " was already guessed.";
+        cardWord = card.getWord();
     }
 }

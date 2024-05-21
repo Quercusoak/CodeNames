@@ -1,14 +1,19 @@
 package Exceptions;
 
 public class NotEnoughCardsException extends RuntimeException{
-    private String msg;
-
-    public String getMessage() {
-        return msg;
+    public int getSumCardsOfTeams() {
+        return sumCardsOfTeams;
     }
 
+    public int getNumCardsinGame() {
+        return numCardsinGame;
+    }
+
+    private int sumCardsOfTeams;
+    private int numCardsinGame;
+
     public NotEnoughCardsException(int sumCardsOfTeams, int numCardsinGame){
-        this.msg = "Can't hand out "+sumCardsOfTeams+" cards to playing teams- only "
-                +numCardsinGame+" words in file.";
+         this.sumCardsOfTeams = sumCardsOfTeams;
+         this.numCardsinGame = numCardsinGame;
     }
 }

@@ -21,9 +21,9 @@ public class DTOBoard {
         return columns;
     }
 
-    public DTOBoard(GameCard[][] board, int rows, int columns){
+    public DTOBoard(GameCard[][] board, int rows, int columns,int numCardsInBoard){
         cards = new ArrayList<>();
-        for (int i=0; i< (rows*columns); i++){
+        for (int i=0; i< Math.min((rows*columns),numCardsInBoard); i++){
             cards.add(i,new DTOCard(board[i/columns][i%columns]));
         }
         this.rows=rows;

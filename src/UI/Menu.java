@@ -1,9 +1,7 @@
 package UI;
 
 import DTO.*;
-import Exceptions.CardAlreadyGuessed;
-import Exceptions.CardSelectionOutOfBound;
-import Exceptions.NoFileLoadedException;
+import Exceptions.*;
 import engine.Engine;
 import engine.GameLogic;
 
@@ -21,13 +19,13 @@ public class Menu {
     private final static String EXIT_MESSAGE = "Thanks for playing! Goodbye!";
     private final static String GAME_STARTED = "Game began.";
 
-    static Engine game = new GameLogic(); //engine is interface and game logic is implementation
+    static Engine engine = new GameLogic(); //engine is interface and game logic is implementation
     private boolean gameActiveFlag = false;
     private boolean fileLoadedFlag = false;
 
-    public void Codenames(){
+    public void Codenames() {
         boolean exit = false;
-        while(!exit) {
+        while (!exit) {
             showMenu();
             try {
                 switch (getUserSelection()) {
@@ -51,7 +49,7 @@ public class Menu {
                         exit = true;
                         break;
                 }
-            }catch (RuntimeException e){
+            } catch (RuntimeException e){
                 System.out.println(e.getMessage());
             }
         }
@@ -72,7 +70,7 @@ public class Menu {
 
         while (userSelection==null) {
             try {
-                userInput = scanner.nextInt();
+                userInput = Integer.parseInt(scanner.nextLine());
                 if (userInput > 0 && userInput <=numOptions) {
                     userSelection = MenuOption.values()[userInput-1];
                 }
@@ -88,23 +86,44 @@ public class Menu {
 
     public void readParamsFile(){
         System.out.print("Enter full path of XML file: ");
-        //Scanner scanner = new Scanner(System.in);
-        //String path = scanner.nextLine();
+        Scanner scanner = new Scanner(System.in);
+        String path = scanner.nextLine();
         try {
-            game.readGameFile("src/Resources/classic.xml");
+            engine.readGameFile(path);
             System.out.println(SUCCESS_MESSAGE);
             fileLoadedFlag = true;
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
+            gameActiveFlag = false;
+        } catch (FileNotXML e) {
+            System.out.println("Not .xml file.");
+        } catch (FileNotFound e){
+            System.out.println("File not found.");
+        } catch (FileInvalid e){
+            System.out.println("File is wrong format for game.");
+        } catch (EmptyTeamName e){
+            System.out.println("All teams must have a name.");
+        }catch (NotEnoughWordsException e){
+            System.out.println("Game can't start with " +e.getNumCards()+(e.isBlack() ? " black" :"")+
+                    " cards since there are "+e.getNumWords()+(e.isBlack() ? " black" :"") +" words in file.");
+        }catch (NotEnoughCardsException e){
+            System.out.println("Can't hand out "+e.getSumCardsOfTeams()+" cards to playing teams- only "
+                    +e.getNumCardsinGame()+" words in file.");
+        }catch (GameLayoutException e){
+            System.out.println("Board ("+e.getRows()+" x "+e.getColumns()+")"
+                    +" not large enough to contain "+e.getNumCards()+" cards");
+        }catch (NotUniqueTeamNames e){
+            System.out.println("Team names must be unique, change name: "+e.getRepeatingName());
+        }catch (ZeroCards e){
+            System.out.println("Number of cards in game and per team must be positive number.");
         }
     }
 
     public void showGameParameters(){
         try {
-            FileParams params = game.displayGameParameters();
+            FileParams params = engine.displayGameParameters();
             System.out.println("Number of possible words: " + params.getGameWordsPossible());
             System.out.println("Number of possible black words: " + params.getBlackWordsPossible());
-            System.out.println("Number of words in game: " + params.getNumWords());
+            System.out.println("Number of cards in game: " + params.getNumCards());
+            System.out.println("Number of black cards in game: " + params.getNumBlackCards());
             params.getTeams().forEach((team, cards) -> System.out.println(team + ", number of cards: " + cards));
         }catch (NoFileLoadedException e){
             System.out.println(e.getMessage());
@@ -113,19 +132,28 @@ public class Menu {
 
     public void startGame() {
         try {
-            game.startGame();
+            engine.startGame();
             gameActiveFlag = true;
             System.out.println(GAME_STARTED);
             printBoard(false);
         } catch (NoFileLoadedException e) {
             System.out.println(e.getMessage());
+        } catch (NotEnoughDistinctBlackCards e){
+            System.out.println("Cant start game with "+e.getNumBlackCardsDesired()
+                    +" black cards since there are "+ e.getNumBlackCardsGenerated()
+                    +" distinct black words that don't show in word dictionary.");
         }
     }
 
     public void playTurn(){
+        if (!gameActiveFlag){
+            System.out.println("Must start the game");
+            return;
+        }
+
         boolean isDefiner = true;
         Scanner scanner = new Scanner(System.in);
-        DTOTeam currentTeam = game.getCurrentTeam();
+        DTOTeam currentTeam = engine.getCurrentTeam();
 
         /*Print currently playing team's name and score:*/
         printTeamScore(currentTeam);
@@ -134,7 +162,7 @@ public class Menu {
         printBoard(isDefiner);
         System.out.print(DEFINERS_TURN);
         String definition = scanner.nextLine();
-        Integer numCargdsToGuess = getNumCardsToGuess(game.getGameBoard().getCards().size(),GET_DEFINER_CARDS_NUM,isDefiner);
+        Integer numCargdsToGuess = getNumCardsToGuess(engine.getGameBoard().getCards().size(),GET_DEFINER_CARDS_NUM,isDefiner);
 
         /*Team's turn:*/
         int numGuesses = 0;
@@ -146,17 +174,17 @@ public class Menu {
 
         while (numGuesses<numCargdsToGuess && !stopPlaying) {
             printBoard( !isDefiner);
-            cardGuess = getNumCardsToGuess(game.getGameBoard().getCards().size(), GET_PLAYERS_CARD_GUESS, !isDefiner);
+            cardGuess = getNumCardsToGuess(engine.getGameBoard().getCards().size(), GET_PLAYERS_CARD_GUESS, !isDefiner);
 
             if (cardGuess.equals(QUIT_TURN)){
                 System.out.println("End of turn.");
                 stopPlaying = true;
-                printTeamScore(game.getCurrentTeam());
+                printTeamScore(engine.getCurrentTeam());
             }
             else{
                 try{
-                    guessOutcome = game.playTurn(cardGuess - 1); //-1 for board indexes
-                    printTeamScore(game.getCurrentTeam());
+                    guessOutcome = engine.playTurn(cardGuess - 1); //-1 for board indexes
+                    printTeamScore(engine.getCurrentTeam());
 
                     /*Check if game ended: by victory or black card.*/
                     if (guessOutcome.getStatus().equals(TurnGuessStatus.BLACK) || guessOutcome.getStatus().getVictory()){
@@ -164,21 +192,34 @@ public class Menu {
                         gameActiveFlag =false;
                     }
                     numGuesses++;
-                    printGameStauts(guessOutcome);
+                    printTurnStauts(guessOutcome);
                 }catch (CardAlreadyGuessed e){
-                    System.out.println(e.getMessage());
+                    System.out.println("The word: "+e.getWord()+ " was already guessed.");
                 }catch (CardSelectionOutOfBound e){
                     System.out.println(e.getMessage());
                 }
             }
         }
-        System.out.println("End of turn.");
-        game.turnEnd();
+        if (gameActiveFlag) {
+            System.out.println("End of turn.");
+            engine.turnEnd();
+        }
     }
 
-    private void printGameStauts(TurnStatus g){
-        System.out.println(g.getStatus().toString() +((g.getTeam()==null)? "" :
-                (g.getTeam().getName() +(g.getStatus().getVictory()? " Score: "+g.getTeam().getScore() :""))));
+    private void printTurnStauts(TurnStatus g){
+        System.out.println(g.getStatus().toString());
+        switch (g.getStatus()){
+            case BLACK:
+                System.out.println("Team "+g.getTeam().getName()+" lost!");
+                break;
+            case OTHERTEAM:
+            case CURRENTTEAM:
+                System.out.println("Team "+g.getTeam().getName()+" gets a point.");
+                break;
+            case VICTORYOTHERTEAM:
+            case VICTORYCURRENTTEAM:
+                System.out.println("Team "+g.getTeam().getName()+" won!");
+        }
     }
 
     /*Print currently playing team's name and score:*/
@@ -206,6 +247,7 @@ public class Menu {
                     valid = true;
                 }
             } catch (InputMismatchException e) {
+                scanner.nextLine(); //clear buffer
                 System.out.println("Input numbers only.");
             }catch (CardSelectionOutOfBound e){
                 System.out.println(e.getMessage());
@@ -215,7 +257,7 @@ public class Menu {
     }
 
     private void printBoard(boolean visible){
-        DTOBoard b = game.getGameBoard();
+        DTOBoard b = engine.getGameBoard();
 
         List<String> cardWords = b.getCards().stream().map(DTOCard::getWord).collect(Collectors.toList());
 
@@ -233,19 +275,20 @@ public class Menu {
         System.out.println();
         printBorder(maxLength, b.getColumns(), "+");
         for (int i = 0; i < b.getRows(); i++) {
-            if (i!=0) {
+            if (i != 0) {
                 printBorder(maxLength, b.getColumns(), "|");
             }
-            printBoardRow(cardWords,i,b.getColumns(),maxLength);
-            printBoardRow(cardInfo,i,b.getColumns(),maxLength);
+            printBoardRow(cardWords, i, b.getColumns(), maxLength);
+            printBoardRow(cardInfo, i, b.getColumns(), maxLength);
         }
         printBorder(maxLength, b.getColumns(), "+");
+        System.out.println();
     }
 
     public void printBoardRow(List<String> b, int i,int col, int padding){
         for (int j = 0; j < col; j++) {
             System.out.print("| ");
-            System.out.printf("%-" + padding + "s", b.get(i*col+j));
+            System.out.printf("%-" + padding + "s", ((i*col+j)<b.size())?b.get(i*col+j) : " "); //for asymetrical boards
         }
         System.out.println("|");
     }
@@ -272,12 +315,12 @@ public class Menu {
     public void activeGameStatus(){
         if (gameActiveFlag) {
             printBoard(true);
-            TeamsList teams = game.getTeams();
+            TeamsList teams = engine.getTeams();
             for (DTOTeam t : teams.getTeamList()) {
                 printTeamScore(t);
                 System.out.println("Number of turns played: " + t.getNumTurnsPlayed());
             }
-            System.out.println("Next turn: " + game.getCurrentTeam().getName());
+            System.out.println("Next turn: " + engine.getCurrentTeam().getName());
         }
         else{
             System.out.println("Must start the game");

@@ -2,14 +2,27 @@ package Exceptions;
 
 public class NotEnoughWordsException extends RuntimeException {
 
-    private String msg;
+    private int numWords;
 
-    public String getMessage() {
-        return msg;
+    public int getNumWords() {
+        return numWords;
+    }
+
+    private int numCards;
+
+    public int getNumCards() {
+        return numCards;
+    }
+
+    private boolean isBlack;
+
+    public boolean isBlack() {
+        return isBlack;
     }
 
     public NotEnoughWordsException(int numWords, int numCards, boolean black){
-        this.msg = "Game can't start with "+(black ? "black" :"") +numCards+
-                " cards since there are only "+numWords+(black ? "black" :"") +" words in file.";
+        this.numWords = numWords;
+        this.isBlack=black;
+        this.numCards =numCards;
     }
 }
