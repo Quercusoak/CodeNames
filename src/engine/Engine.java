@@ -1,7 +1,7 @@
 package engine;
 
 
-import ODT.FileParams;
+import DTO.*;
 
 public interface Engine
 {
@@ -12,4 +12,14 @@ public interface Engine
     FileParams displayGameParameters();
 
     void startGame();
+
+    TurnStatus playTurn(Integer cardNum);
+
+    void turnEnd();
+
+    DTOBoard getGameBoard();
+
+    DTOTeam getCurrentTeam();
+
+    TeamsList getTeams();
 }

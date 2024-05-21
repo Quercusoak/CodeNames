@@ -1,13 +1,13 @@
 package Exceptions;
 
 public class NotUniqueTeamNames extends RuntimeException {
-    private String msg;
+    private String repeatingName;
 
-    public String getMessage() {
-        return msg;
+    public String getRepeatingName() {
+        return repeatingName;
     }
 
     public NotUniqueTeamNames(String repeatingName){
-        msg = "Team names must be unique, change name: "+repeatingName;
+        this.repeatingName = repeatingName;
     }
 }

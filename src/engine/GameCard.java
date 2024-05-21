@@ -32,10 +32,6 @@ public class GameCard {
         this.isBlack=isBlack;
     }
 
-    public void setTeam(Team t){
-        team=t;
-    }
-
     public int getCardNumber() {
         return cardNumber;
     }
@@ -48,7 +44,7 @@ public class GameCard {
         return isFound;
     }
 
-    public void setFound(boolean found) {
-        isFound = found;
+    public void setFound() {
+        isFound = true;
     }
 }
