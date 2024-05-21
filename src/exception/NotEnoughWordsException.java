@@ -1,4 +1,4 @@
-package Exceptions;
+package exception;
 
 public class NotEnoughWordsException extends RuntimeException {
 

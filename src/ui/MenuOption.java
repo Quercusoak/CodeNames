@@ -1,4 +1,4 @@
-package UI;
+package ui;
 
 public enum MenuOption {
     LOADXML("Load new xml file."),

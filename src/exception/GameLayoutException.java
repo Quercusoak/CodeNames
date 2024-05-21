@@ -1,4 +1,4 @@
-package Exceptions;
+package exception;
 
 public class GameLayoutException extends RuntimeException {
 

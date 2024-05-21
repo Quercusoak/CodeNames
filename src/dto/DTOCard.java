@@ -1,7 +1,6 @@
-package DTO;
+package dto;
 
 import engine.GameCard;
-import engine.Team;
 
 public class DTOCard {
     private String word;

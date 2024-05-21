@@ -1,7 +1,7 @@
-package UI;
+package ui;
 
-import DTO.*;
-import Exceptions.*;
+import dto.*;
+import exception.*;
 import engine.Engine;
 import engine.GameLogic;
 

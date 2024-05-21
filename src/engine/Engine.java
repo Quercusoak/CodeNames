@@ -1,7 +1,7 @@
 package engine;
 
 
-import DTO.*;
+import dto.*;
 
 public interface Engine
 {

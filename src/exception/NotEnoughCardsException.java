@@ -1,4 +1,4 @@
-package Exceptions;
+package exception;
 
 public class NotEnoughCardsException extends RuntimeException{
     public int getSumCardsOfTeams() {

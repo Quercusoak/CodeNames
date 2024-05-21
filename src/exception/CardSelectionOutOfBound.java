@@ -1,4 +1,4 @@
-package Exceptions;
+package exception;
 
 public class CardSelectionOutOfBound extends RuntimeException{
     private String msg;

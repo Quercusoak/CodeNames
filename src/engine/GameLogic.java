@@ -1,6 +1,6 @@
 package engine;
 
-import Exceptions.*;
+import exception.*;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import DTO.*;
+import dto.*;
 import engine.jaxb.generated.ECNGame;
 
 public class GameLogic implements Engine {

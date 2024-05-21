@@ -1,4 +1,4 @@
-package Exceptions;
+package exception;
 
 public class NotEnoughDistinctBlackCards extends RuntimeException{
     public NotEnoughDistinctBlackCards(int numBlackCardsGenerated, int numBlackCardsDesired){
