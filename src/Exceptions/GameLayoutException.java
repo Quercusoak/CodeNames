@@ -1,13 +1,28 @@
 package Exceptions;
 
 public class GameLayoutException extends RuntimeException {
-    private String msg;
 
-    public String getMessage() {
-        return msg;
+    public int getRows() {
+        return rows;
+    }
+
+    private int rows;
+
+    private int columns;
+
+    public int getColumns() {
+        return columns;
+    }
+
+    private int numCards;
+
+    public int getNumCards() {
+        return numCards;
     }
 
     public GameLayoutException(int rows, int columns, int numGameCards){
-        msg = "Game layout ("+rows+" X "+columns+")"+" not large enough to contain "+numGameCards+" cards";
+        this.rows =rows;
+        this.columns = columns;
+        numCards=numGameCards;
     }
 }

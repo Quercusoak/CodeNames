@@ -1,1 +1,1 @@
-xjc -p engine.generated test/classicSchema.xsd
+xjc -p engine.jaxb.generated Resources/classicSchema.xsd

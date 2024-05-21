@@ -1,18 +1,25 @@
 package engine;
 
 
-import engine.generated.ECNGame;
-import jar.GameParams;
-
-import java.util.Set;
+import DTO.*;
 
 public interface Engine
 {
-    //recieves full path, always displayed
+    /*recieves full path, always displayed*/
     void readGameFile(String XMLpath);
 
     /*Only displayed when file successfully loaded*/
-    GameParams displayGameParameters();
+    FileParams displayGameParameters();
 
     void startGame();
+
+    TurnStatus playTurn(Integer cardNum);
+
+    void turnEnd();
+
+    DTOBoard getGameBoard();
+
+    DTOTeam getCurrentTeam();
+
+    TeamsList getTeams();
 }

@@ -1,11 +1,13 @@
-package engine;
+package DTO;
 
-public class Team {
-    public Team(String name, int numCards){
-        this.name=name;
-        numberOfCards=numCards;
-        score = 0;
-        numTurnsPlayed = 0;
+import engine.Team;
+
+public class DTOTeam {
+    public DTOTeam(Team t){
+        name=t.getName();
+        numberOfCards=t.getNumberOfCards();
+        score = t.getScore();
+        numTurnsPlayed =t.getNumTurnsPlayed();
     }
 
     private String name;
@@ -23,15 +25,8 @@ public class Team {
         return score;
     }
 
-    public void addPoint(){
-        score++;
-    }
-
     private int numTurnsPlayed;
     public int getNumTurnsPlayed() {
         return numTurnsPlayed;
-    }
-    public void incTurnCounter() {
-        numTurnsPlayed++;
     }
 }
