@@ -1,5 +1,6 @@
 package engine;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,8 @@ public class GameSession {
 
     public GameSession(int rows, int columns, List<Team> teams){
         board = new GameCard[rows][columns];
-        this.teams = teams;
+        this.teams = new ArrayList<>();
+        teams.forEach(t->this.teams.add(new Team(t.getName(),t.getNumberOfCards())));
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;
     }

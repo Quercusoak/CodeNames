@@ -1,8 +1,6 @@
 package engine;
 
 import Exceptions.*;
-import ODT.CurrentTeam;
-import ODT.FileParams;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -11,11 +9,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import ODT.*;
+import DTO.*;
 import engine.jaxb.generated.ECNGame;
 
 public class GameLogic implements Engine {
@@ -87,7 +84,7 @@ public class GameLogic implements Engine {
             throw new NotEnoughCardsException(team1NumCards + team2NumCards, numCardsinGame);
         }
 
-        /*Verify rows X columns >= overall cards on board*/
+        /*Verify rows x columns >= overall cards on board*/
         int rows = ecnGame.getECNBoard().getECNLayout().getRows();
         int columns = ecnGame.getECNBoard().getECNLayout().getColumns();
         if ((rows*columns)<numCardsinGame){
@@ -95,7 +92,6 @@ public class GameLogic implements Engine {
         }
 
         /*Verify team names are unique*/
-        //How to make for more than 2 teams?
         String team1Name = ecnGame.getECNTeam1().getName();
         String team2Name = ecnGame.getECNTeam2().getName();
         if (team1Name.equals(team2Name)) {
@@ -114,12 +110,14 @@ public class GameLogic implements Engine {
         if (gameData==null){
             throw new NoFileLoadedException();
         }
-        FileParams odt = new FileParams(gameData.getWordsDictionary().size(),  gameData.getBlackWordsDictionary().size(),
+        return new FileParams(gameData.getWordsDictionary().size(),  gameData.getBlackWordsDictionary().size(),
                 (gameData.getCardsCount() + gameData.getBlackCardsCount()), gameData.getTeams());
-        return odt;
     }
 
     public void startGame(){
+        if (gameData==null){
+            throw new NoFileLoadedException();
+        }
         game = new GameSession(gameData.getRows(), gameData.getColumns(), gameData.getTeams());
 
         /*Generate cards for game session*/
@@ -169,18 +167,18 @@ public class GameLogic implements Engine {
                 .forEach(a->game.addCard(a,!isBlack));
     }
 
-    public GameBoard getGameBoard(){
-        if (gameData==null){
-            throw new NoFileLoadedException();
-        }
-        return new GameBoard(game.getBoard(), game.getCards(), gameData.getRows(), gameData.getColumns());
-    }
-
-    public CurrentTeam getCurrentTeam(){
+    public DTOBoard getGameBoard(){
         if (game==null){
             throw new GameInactiveException();
         }
-        return new CurrentTeam(game.getPlayingTeam());
+        return new DTOBoard(game.getBoard(), gameData.getRows(), gameData.getColumns());
+    }
+
+    public DTOTeam getCurrentTeam(){
+        if (game==null){
+            throw new GameInactiveException();
+        }
+        return new DTOTeam(game.getPlayingTeam());
     }
 
     @Override
@@ -193,19 +191,25 @@ public class GameLogic implements Engine {
             throw new CardSelectionOutOfBound(game.getCards().size());
         }
 
-        /*Change card status to found*/
         GameCard card = game.getBoard()[cardNum / gameData.getColumns()][cardNum % gameData.getColumns()];
+
+        /*Check if card was found already*/
+        if (card.isFound()){
+            throw new CardAlreadyGuessed(card);
+        }
+
+        /*Change card status to found*/
         card.setFound();
 
         /*Check whose card was guessed*/
         TurnGuessStatus guessStatus;
         Team teamWhoseCardItIs = null;
-        TurnStatus turnStatus;
 
         if (card.getTeam()!=null) {
             teamWhoseCardItIs = card.getTeam();
             teamWhoseCardItIs.addPoint();
             boolean isCurrTeamsCard = teamWhoseCardItIs.equals(game.getPlayingTeam());
+
             if (teamWhoseCardItIs.getNumberOfCards() != teamWhoseCardItIs.getScore()) {
                 guessStatus = isCurrTeamsCard ? TurnGuessStatus.CURRENTTEAM : TurnGuessStatus.OTHERTEAM;
             }
@@ -217,50 +221,18 @@ public class GameLogic implements Engine {
             guessStatus = card.isBlack()? TurnGuessStatus.BLACK : TurnGuessStatus.NEUTRAL;
         }
 
-        turnStatus = new TurnStatus(guessStatus,teamWhoseCardItIs);
+        return new TurnStatus(guessStatus,teamWhoseCardItIs);
+    }
 
-
+    @Override
+    public void turnEnd() {
+        /*Increment teams turn count*/
+        game.getPlayingTeam().incTurnCounter();
         /*Increment current team to next:*/
         game.nextTeam();
-
-        return turnStatus;
     }
 
-    /*Check if game ended by victory or black card, else move to next team.*/
-    public void endOfTurnChecks(){
-
-    }
-
-
-
-
-
-    /*FOR TEST PURPOSES!!!!*/
-    private void testShowWords(GameSession game){
-        AtomicInteger i= new AtomicInteger(1);
-        game.getCards().stream()
-                .forEach(c->System.out.println((i.getAndIncrement())+") "+c.getWord()+" "
-                        +((c.getTeam()!=null) ? c.getTeam().getName() : (c.isBlack()?"Black":"Neutral"))));
-    }
-    private void testPrintBoard(GameSession game){
-        for (int i = 0; i < gameData.getRows(); i++) {
-            testPrintRows(game,i);
-        }
-    }
-    private void testPrintRows(GameSession game,int i){
-        int maxLength = game.getCards().stream()
-                .map(a->a.getWord())
-                .map(String::length)
-                .max(Integer::compare)
-                .get();
-        int j;
-        for (j = 0; j < gameData.getColumns(); j++) {
-            System.out.print(String.format("%-" + (maxLength+1) + "s", game.getBoard()[i][j].getWord()));
-        }
-        System.out.println();
-        for (j = 0; j < gameData.getColumns(); j++) {
-            System.out.print(String.format("%-" + (maxLength+1) + "s", "["+game.getBoard()[i][j].getCardNumber()+"]"));
-        }
-        System.out.println();
+    public TeamsList getTeams(){
+        return new TeamsList(game.getTeams());
     }
 }

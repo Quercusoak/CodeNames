@@ -1,12 +1,13 @@
-package ODT;
+package DTO;
 
 import engine.Team;
 
-public class CurrentTeam {
-    public CurrentTeam(Team t){
+public class DTOTeam {
+    public DTOTeam(Team t){
         name=t.getName();
         numberOfCards=t.getNumberOfCards();
         score = t.getScore();
+        numTurnsPlayed =t.getNumTurnsPlayed();
     }
 
     private String name;
@@ -22,5 +23,10 @@ public class CurrentTeam {
     private int score;
     public int getScore(){
         return score;
+    }
+
+    private int numTurnsPlayed;
+    public int getNumTurnsPlayed() {
+        return numTurnsPlayed;
     }
 }

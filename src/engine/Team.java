@@ -31,7 +31,7 @@ public class Team {
     public int getNumTurnsPlayed() {
         return numTurnsPlayed;
     }
-    public void setNumTurnsPlayed(int numTurnsPlayed) {
-        this.numTurnsPlayed = numTurnsPlayed;
+    public void incTurnCounter() {
+        numTurnsPlayed++;
     }
 }

@@ -1,7 +1,7 @@
 package engine;
 
 
-import ODT.*;
+import DTO.*;
 
 public interface Engine
 {
@@ -15,7 +15,11 @@ public interface Engine
 
     TurnStatus playTurn(Integer cardNum);
 
-    GameBoard getGameBoard();
+    void turnEnd();
 
-    CurrentTeam getCurrentTeam();
+    DTOBoard getGameBoard();
+
+    DTOTeam getCurrentTeam();
+
+    TeamsList getTeams();
 }
