@@ -6,6 +6,8 @@ public enum MenuOption {
     NEWGAME("Start new game."),
     PLAYTURN("Play turn."),
     GAMESTATUS("Display game status."),
+    LOADSAVE("Load saved game."),
+    SAVEGAME("Save game."),
     EXIT("Exit.");
 
     private final String option;

@@ -1,6 +1,8 @@
 package engine;
 
-public class Team {
+import java.io.Serializable;
+
+public class Team implements Serializable {
     public Team(String name, int numCards){
         this.name=name;
         numberOfCards=numCards;

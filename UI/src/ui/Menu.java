@@ -1,15 +1,22 @@
 package ui;
 
 import dto.*;
+import engine.GameSession;
 import exception.*;
 import engine.Engine;
 import engine.GameLogic;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Menu {
-    private final static String SUCCESS_MESSAGE = "File loaded successfully.";
+    private final static String SUCCESS_MESSAGE = "Operation was successfull.";
     private final static String DEFINERS_TURN = "Team's definer, input word group definition:";
     private final static String GET_DEFINER_CARDS_NUM = "Input overall number of cards that fit the definition: ";
     private final static Integer QUIT_TURN = 0;
@@ -18,6 +25,7 @@ public class Menu {
     private final static String SELECTION_OUT_OF_BOUNDS = "Input option number from list.";
     private final static String EXIT_MESSAGE = "Thanks for playing! Goodbye!";
     private final static String GAME_STARTED = "Game began.";
+    private final static String GAME_INACTIVE = "Must start the game";
 
     static Engine engine = new GameLogic(); //engine is interface and game logic is implementation
     private boolean gameActiveFlag = false;
@@ -44,6 +52,12 @@ public class Menu {
                     case GAMESTATUS:
                         activeGameStatus();
                         break;
+                    case LOADSAVE:
+                        loadGame();
+                        break;
+                    case SAVEGAME:
+                        saveGame();
+                        break;
                     case EXIT:
                         displayExitMessage();
                         exit = true;
@@ -55,14 +69,14 @@ public class Menu {
         }
     }
 
-    public void showMenu(){
+    private void showMenu(){
         /*Enum of menu options*/
         System.out.println();
         System.out.println(MAIN_MENU);
         Arrays.stream(MenuOption.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c.toString()));
     }
 
-    public MenuOption getUserSelection(){
+    private MenuOption getUserSelection(){
         Scanner scanner = new Scanner(System.in);
         int userInput;
         MenuOption userSelection = null;
@@ -84,7 +98,45 @@ public class Menu {
         return userSelection;
     }
 
-    public void readParamsFile(){
+    private void loadGame(){
+        System.out.print("Enter full path of save file: ");
+        Scanner scanner = new Scanner(System.in);
+        String path = scanner.nextLine();
+        Path p = Paths.get(path);
+        try (ObjectInputStream in =
+                     new ObjectInputStream(
+                             Files.newInputStream(p))){
+            engine = (Engine) in.readObject();
+            System.out.println(SUCCESS_MESSAGE);
+            fileLoadedFlag = true;
+            gameActiveFlag = true;
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("File invalid.");
+        }
+    }
+
+    private void saveGame(){
+        if (fileLoadedFlag && gameActiveFlag) {
+            System.out.print("Enter full path to save game to: ");
+            Scanner scanner = new Scanner(System.in);
+            String path = scanner.nextLine();
+            Path p = Paths.get(path);
+            try (ObjectOutputStream out =
+                         new ObjectOutputStream(
+                                 Files.newOutputStream(p))) {
+                out.writeObject(engine);
+                out.flush();
+                System.out.println(SUCCESS_MESSAGE);
+            } catch (IOException e) {
+                System.out.println("Error, game unsaved.");
+            }
+        }
+        else{
+            System.out.println(GAME_INACTIVE);
+        }
+    }
+
+    private void readParamsFile(){
         System.out.print("Enter full path of XML file: ");
         Scanner scanner = new Scanner(System.in);
         String path = scanner.nextLine();
@@ -117,10 +169,10 @@ public class Menu {
         }
     }
 
-    public void showGameParameters(){
+    private void showGameParameters(){
         try {
             FileParams params = engine.displayGameParameters();
-            System.out.println("Number of possible words: " + params.getGameWordsPossible());
+            System.out.println("\nNumber of possible words: " + params.getGameWordsPossible());
             System.out.println("Number of possible black words: " + params.getBlackWordsPossible());
             System.out.println("Number of cards in game: " + params.getNumCards());
             System.out.println("Number of black cards in game: " + params.getNumBlackCards());
@@ -130,7 +182,7 @@ public class Menu {
         }
     }
 
-    public void startGame() {
+    private void startGame() {
         try {
             engine.startGame();
             gameActiveFlag = true;
@@ -145,9 +197,9 @@ public class Menu {
         }
     }
 
-    public void playTurn(){
+    private void playTurn(){
         if (!gameActiveFlag){
-            System.out.println("Must start the game");
+            System.out.println(GAME_INACTIVE);
             return;
         }
 
@@ -229,7 +281,7 @@ public class Menu {
 
     /*Validation of card num input similar between definer and guessers (must be number in range of amount playing cards)
      * but guessers can quit at any moment, hence the boolean*/
-    public Integer getNumCardsToGuess(int maxCardsNum, String msg,boolean isDefiner){
+    private Integer getNumCardsToGuess(int maxCardsNum, String msg,boolean isDefiner){
         Integer numCargdsToGuess = 0;//I have to initialize but logically its meaningless
         Scanner scanner = new Scanner(System.in);
         boolean valid = false;
@@ -285,7 +337,7 @@ public class Menu {
         System.out.println();
     }
 
-    public void printBoardRow(List<String> b, int i,int col, int padding){
+    private void printBoardRow(List<String> b, int i,int col, int padding){
         for (int j = 0; j < col; j++) {
             System.out.print("| ");
             System.out.printf("%-" + padding + "s", ((i*col+j)<b.size())?b.get(i*col+j) : " "); //for asymetrical boards
@@ -312,7 +364,7 @@ public class Menu {
         System.out.println(str);
     }
 
-    public void activeGameStatus(){
+    private void activeGameStatus(){
         if (gameActiveFlag) {
             printBoard(true);
             TeamsList teams = engine.getTeams();
@@ -323,11 +375,11 @@ public class Menu {
             System.out.println("Next turn: " + engine.getCurrentTeam().getName());
         }
         else{
-            System.out.println("Must start the game");
+            System.out.println(GAME_INACTIVE);
         }
     }
 
-    public void displayExitMessage(){
+    private void displayExitMessage(){
         System.out.println(EXIT_MESSAGE);
     }
 }

@@ -1,7 +1,9 @@
 package engine;
 
+import java.io.Serializable;
+
 /*if (team == null and isBlack=false) then card is neutral */
-public class GameCard {
+public class GameCard implements Serializable {
     private String word;
     private Team team;
     private boolean isBlack;

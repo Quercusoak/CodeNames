@@ -1,11 +1,12 @@
 package engine;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GameSession {
+public class GameSession implements Serializable {
     private GameCard[][] board;
     private Set<GameCard> cardsInGame;
     private List<Team> teams;

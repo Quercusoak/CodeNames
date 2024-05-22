@@ -1,7 +1,5 @@
 package exception;
 
-import engine.GameCard;
-
 public class CardAlreadyGuessed extends RuntimeException {
     private String cardWord;
 
@@ -9,7 +7,7 @@ public class CardAlreadyGuessed extends RuntimeException {
         return cardWord;
     }
 
-    public CardAlreadyGuessed(GameCard card){
-        cardWord = card.getWord();
+    public CardAlreadyGuessed(String card){
+        cardWord = card;
     }
 }

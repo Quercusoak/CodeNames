@@ -5,9 +5,10 @@ import exception.*;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -15,7 +16,7 @@ import java.util.stream.IntStream;
 import dto.*;
 import engine.jaxb.generated.ECNGame;
 
-public class GameLogic implements Engine {
+public class GameLogic implements Engine, Serializable {
 
     private GameData gameData = null;
     private GameSession game = null;
@@ -209,7 +210,7 @@ public class GameLogic implements Engine {
 
         /*Check if card was found already*/
         if (card.isFound()){
-            throw new CardAlreadyGuessed(card);
+            throw new CardAlreadyGuessed(card.getWord());
         }
 
         /*Change card status to found*/

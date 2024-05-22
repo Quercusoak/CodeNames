@@ -1,11 +1,10 @@
 package engine;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-public class GameData {
+public class GameData implements Serializable {
 
     public GameData(){
         teams = new ArrayList<>();

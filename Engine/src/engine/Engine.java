@@ -3,6 +3,8 @@ package engine;
 
 import dto.*;
 
+import java.io.IOException;
+
 public interface Engine
 {
     /*recieves full path, always displayed*/
