@@ -102,6 +102,7 @@ public class Menu {
         System.out.print("Enter full path of save file: ");
         Scanner scanner = new Scanner(System.in);
         String path = scanner.nextLine();
+        path =path.concat(".dat");
         Path p = Paths.get(path);
         try (ObjectInputStream in =
                      new ObjectInputStream(
@@ -120,6 +121,7 @@ public class Menu {
             System.out.print("Enter full path to save game to: ");
             Scanner scanner = new Scanner(System.in);
             String path = scanner.nextLine();
+            path =path.concat(".dat");
             Path p = Paths.get(path);
             try (ObjectOutputStream out =
                          new ObjectOutputStream(

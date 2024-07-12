@@ -22,7 +22,7 @@ public class GameLogic implements Engine, Serializable {
     private GameSession game = null;
 
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
-    private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n]";
+    private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n\\t\\r]";
 
     @Override
     public void readGameFile(String XMLpath) {
