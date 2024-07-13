@@ -9,8 +9,8 @@ public class NotEnoughCardsException extends RuntimeException{
         return numCardsinGame;
     }
 
-    private int sumCardsOfTeams;
-    private int numCardsinGame;
+    private final int sumCardsOfTeams;
+    private final int numCardsinGame;
 
     public NotEnoughCardsException(int sumCardsOfTeams, int numCardsinGame){
          this.sumCardsOfTeams = sumCardsOfTeams;

@@ -1,5 +1,6 @@
 package engine;
 
+import engine.jaxb.generated.ECNTeam;
 import exception.*;
 
 import javax.xml.bind.JAXBContext;
@@ -7,7 +8,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,11 +23,13 @@ public class GameLogic implements Engine, Serializable {
 
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n\\t\\r]";
+    private final static String CHARS_TO_REMOVE_FROM_DICTIONARY_OLD = "[:;\"!@#$%^&*)(\\-_,.?]";
+    private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]"; //\p{P}\p{S}
 
     @Override
     public void readGameFile(String XMLpath) {
         try {
-            String extension = XMLpath.substring(XMLpath.lastIndexOf("."), XMLpath.length());
+            String extension = XMLpath.substring(XMLpath.lastIndexOf("."));
             if (extension.equals(".xml")) {
                 jaxbSchema(XMLpath);
             } else {
@@ -44,7 +46,7 @@ public class GameLogic implements Engine, Serializable {
             JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_XML_GAME_PACKAGE_NAME);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             ECNGame ecnGame = (ECNGame) jaxbUnmarshaller.unmarshal(inputStream);
-            loadFileGameData(ecnGame);
+            loadFileGameData(ecnGame, XMLpath);
         } catch (JAXBException e) {
             throw new FileInvalid();
         } catch (FileNotFoundException e){
@@ -52,76 +54,36 @@ public class GameLogic implements Engine, Serializable {
         }
     }
 
-    private void loadFileGameData(ECNGame ecnGame){
+    private void loadFileGameData(ECNGame ecnGame, String XMLpath){
+        int numWords =  ecnGame.getECNBoard().getCardsCount();
+        int numBlackWords = ecnGame.getECNBoard().getBlackCardsCount();
+        int numCardsinGame = numWords + numBlackWords;
 
-        /*Check if there are enough words to start game with specified card amount.*/
-        List<String> allWords = Arrays.stream(ecnGame.getECNWords().getECNGameWords().split(REGEX_TO_EXCLUDE_FROM_DICTIONARY))
-                .filter(s -> !s.matches(REGEX_TO_EXCLUDE_FROM_DICTIONARY) && !s.isEmpty())
-                .distinct()
-                .collect(Collectors.toList());
-
-        int numPossibleWords = allWords.size();
-        int numCards =  ecnGame.getECNBoard().getCardsCount();
-        if (numPossibleWords <=0) {
-            throw new ZeroCards();
-        }
-        if (numPossibleWords < numCards){
-            throw new NotEnoughWordsException(numPossibleWords,numCards,false);
-        }
-
-        /*Check if there are enough black words to start game with specified black card amount.*/
-        List<String> allBlackWords = Arrays.stream(ecnGame.getECNWords().getECNBlackWords().split(REGEX_TO_EXCLUDE_FROM_DICTIONARY))
-                .filter(a->!a.matches(REGEX_TO_EXCLUDE_FROM_DICTIONARY) && !a.isEmpty())
-                .distinct()
-                .collect(Collectors.toList());
-
-        int numBlackCards = ecnGame.getECNBoard().getBlackCardsCount();
-        if (allBlackWords.size() < numBlackCards){
-            throw new NotEnoughWordsException(allBlackWords.size(),numBlackCards,true);
-        }
-
-        /*Verify sum cards of teams isn't larger than amount cards in game.*/
-        int team1NumCards = ecnGame.getECNTeam1().getCardsCount();
-        int team2NumCards = ecnGame.getECNTeam2().getCardsCount();
-        if (team1NumCards + team2NumCards > numCards) {
-            throw new NotEnoughCardsException(team1NumCards + team2NumCards, numCards);
-        }
-        if (team1NumCards <=0 || team2NumCards <=0) {
-            throw new ZeroCards();
-        }
+        /*Get the words from ECN-Dictionary-File*/
+        String directoryPath = new File(XMLpath).getParent();
+        String dictionaryFileName = directoryPath+"\\"+ ecnGame.getECNDictionaryFile();
+        List<String> dictinary = getWordsFromXML(dictionaryFileName, numCardsinGame);
 
         /*Verify rows x columns >= overall cards on board*/
         int rows = ecnGame.getECNBoard().getECNLayout().getRows();
         int columns = ecnGame.getECNBoard().getECNLayout().getColumns();
-        int numCardsinGame = numCards + numBlackCards;
         if ((rows*columns)<numCardsinGame){
             throw new GameLayoutException(rows,columns,numCardsinGame);
         }
 
-        /*Verify team names are present unique*/
-        String team1Name = ecnGame.getECNTeam1().getName();
-        String team2Name = ecnGame.getECNTeam2().getName();
-        if (team1Name.isEmpty() || team2Name.isEmpty()){
-            throw new EmptyTeamName();
-        }
-        if (team1Name.equals(team2Name)) {
-            throw new NotUniqueTeamNames(team1Name);
-        }
+        /*Get teams*/
+        List<Team> teams = getTeamsFromXML(ecnGame.getECNTeams().getECNTeam(), numWords);
 
-        /*Keep sets of all gameWords and blackGameWords, not just those in current game.*/
+        /*Keep collection of all game words, not just those in current game.*/
         gameData = new GameData();
-        gameData.addTeam(team1Name, team1NumCards);
-        gameData.addTeam(team2Name, team2NumCards);
-        gameData.setGameData(allWords,allBlackWords,numCards,numBlackCards,rows,columns);
-
+        gameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), dictionaryFileName);
     }
 
     public FileParams displayGameParameters(){
         if (gameData==null){
             throw new NoFileLoadedException();
         }
-        return new FileParams(gameData.getWordsDictionary().size(),  gameData.getBlackWordsDictionary().size(),
-                gameData.getCardsCount() , gameData.getBlackCardsCount(), gameData.getTeams());
+        return new FileParams(gameData);
     }
 
     public void startGame(){
@@ -145,24 +107,18 @@ public class GameLogic implements Engine, Serializable {
     private void generateCards(){
         /*Generate cards for game session*/
         boolean isBlack = true;
-        Random rand = new Random();
-        List<String> currGameCards = rand.ints(0, (int)gameData.getWordsDictionary().size())
+
+        List<String> dict = gameData.getDictionaryWords();
+        Collections.shuffle(dict);
+
+        //Partition dictionary into two lists - cards and black cards
+        Map<Boolean, List<String>> partitioned = dict.stream()
                 .distinct()
-                .limit(gameData.getCardsCount())
-                .mapToObj(gameData.getWordsDictionary()::get)
-                .collect(Collectors.toList());
+                .limit(gameData.getCardsCount()+ gameData.getBlackCardsCount())
+                .collect(Collectors.partitioningBy(i -> dict.indexOf(i) < gameData.getCardsCount()));
 
-        /*Generate black cards for game session*/
-        Set<String> currGameBlackCards = rand.ints(0,gameData.getBlackWordsDictionary().size())
-                .limit(gameData.getBlackCardsCount())
-                .mapToObj(gameData.getBlackWordsDictionary()::get)
-                .filter(p -> !currGameCards.contains(p))
-                .collect(Collectors.toSet());
-
-        /*Check if there are enough black cards generated*/
-        if (currGameBlackCards.size() < gameData.getBlackCardsCount()){
-            throw new NotEnoughDistinctBlackCards(currGameBlackCards.size(),gameData.getBlackCardsCount());
-        }
+        List<String> currGameCards = partitioned.get(true);
+        List<String> currGameBlackCards = partitioned.get(false);
 
         currGameBlackCards.forEach(a->game.addCard(a,isBlack));
 
@@ -253,5 +209,73 @@ public class GameLogic implements Engine, Serializable {
 
     public TeamsList getTeams(){
         return new TeamsList(game.getTeams());
+    }
+
+    private List<String> getWordsFromXML(String ecnDictionaryFile, int numCardsinGame){
+        /*Get the words from ECN-Dictionary-File*/
+        Set<String> dictionary = new HashSet<>();
+        try (BufferedReader in = new BufferedReader(
+                new InputStreamReader(
+                        Files.newInputStream(Paths.get(ecnDictionaryFile)))); ) {
+
+            in.lines()
+                    .forEach(s-> dictionary.addAll(Arrays.stream(s
+                                    .replaceAll(CHARS_TO_REMOVE_FROM_DICTIONARY," ") //removes from words numbers, symbols, punctuations (it's -> it)
+                                    .split(REGEX_TO_EXCLUDE_FROM_DICTIONARY))
+                            .filter(a-> a.length() > 1) //exclude empty strings and single letters
+                            .map(String::toLowerCase)
+                            .distinct()
+                            .collect(Collectors.toList())));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        /*Check if there are enough words to start game with specified card amount.*/
+        int numPossibleWords = dictionary.size();
+        if (numPossibleWords == 0) {
+            throw new ZeroCards();
+        }
+        if (numPossibleWords < numCardsinGame){
+            throw new NotEnoughWordsException(numPossibleWords,numCardsinGame);
+        }
+
+        return new ArrayList<>(dictionary);
+    }
+
+    private List<Team> getTeamsFromXML(List<engine.jaxb.generated.ECNTeam> ecnTeams, int numWordsInGame){
+        /*Get teams*/
+        List<Team> teams = new ArrayList<>();
+
+        /*Verify sum cards of teams isn't larger than amount cards in game.*/
+        int sumTeamsCards = ecnTeams.stream().peek(t -> {
+            /*verify every team has positive amount of cards.*/
+            if (t.getCardsCount() <= 0){
+                throw new ZeroCards();
+            }
+            /*Verify guessers and definers >=1*/
+            if (t.getDefiners() <1 || t.getGuessers() <1){
+                throw new NotEnoughTeamPlayers();
+            }
+        }).mapToInt(ECNTeam::getCardsCount).sum();
+
+        if (sumTeamsCards > numWordsInGame){
+            throw new NotEnoughCardsException(sumTeamsCards, numWordsInGame);
+        }
+
+        /*Verify all teams have a name*/
+        List<String> teamNames = ecnTeams.stream().map(ECNTeam::getName).collect(Collectors.toList());
+        if (teamNames.isEmpty()){
+            throw new EmptyTeamName();
+        }
+
+        /*Verify team names are unique, otherwise return list of duplicate names.*/
+        List<String> nonUniqueTeamNames = teamNames.stream().filter(i-> Collections.frequency(teamNames, i)> 1).collect(Collectors.toList());
+        if (!nonUniqueTeamNames.isEmpty()) {
+            throw new NotUniqueTeamNames(nonUniqueTeamNames);
+        }
+
+        ecnTeams.forEach(t -> teams.add(new Team(t.getName(), t.getCardsCount(), t.getDefiners(),t.getGuessers())));
+
+        return teams;
     }
 }

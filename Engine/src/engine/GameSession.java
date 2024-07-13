@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 public class GameSession implements Serializable {
-    private GameCard[][] board;
-    private Set<GameCard> cardsInGame;
-    private List<Team> teams;
+    private final GameCard[][] board;
+    private final Set<GameCard> cardsInGame;
+    private final List<Team> teams;
     private int currTeamIndex;
 
     public Team getPlayingTeam() {
@@ -31,7 +31,7 @@ public class GameSession implements Serializable {
     public GameSession(int rows, int columns, List<Team> teams){
         board = new GameCard[rows][columns];
         this.teams = new ArrayList<>();
-        teams.forEach(t->this.teams.add(new Team(t.getName(),t.getNumberOfCards())));
+        teams.forEach(t->this.teams.add(new Team(t.getName(), t.getNumberOfCards(), t.getNumDefiners(),t.getNumGuessers())));
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;
     }

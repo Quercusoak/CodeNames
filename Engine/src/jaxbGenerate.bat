@@ -1,0 +1,1 @@
+xjc -p engine.jaxb.generated CodeNames-v2.xsd

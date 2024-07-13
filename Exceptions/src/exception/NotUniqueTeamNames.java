@@ -1,13 +1,15 @@
 package exception;
 
-public class NotUniqueTeamNames extends RuntimeException {
-    private String repeatingName;
+import java.util.List;
 
-    public String getRepeatingName() {
+public class NotUniqueTeamNames extends RuntimeException {
+    private final List<String> repeatingName;
+
+    public List<String> getRepeatingName() {
         return repeatingName;
     }
 
-    public NotUniqueTeamNames(String repeatingName){
+    public NotUniqueTeamNames(List<String> repeatingName){
         this.repeatingName = repeatingName;
     }
 }

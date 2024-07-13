@@ -1,13 +1,12 @@
 package engine;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class GameData implements Serializable {
 
     public GameData(){
-        teams = new ArrayList<>();
+        gameStatus = GameStatus.PENDING;
     }
 
     private int cardsCount;
@@ -27,30 +26,30 @@ public class GameData implements Serializable {
         return teams;
     }
 
-    public void addTeam(String name, int numCards) {
-        Team t = new Team(name,numCards);
-        this.teams.add(t);
+    public List<String> getDictionaryWords() {
+        return dictionaryWords;
     }
+    private List<String> dictionaryWords;
 
-    public List<String> getBlackWordsDictionary() {
-        return blackWordsDictionary;
-    }
+    private String gameName;
+    public String getGameName() {return gameName;}
 
-    public List<String> getWordsDictionary() {
-        return wordsDictionary;
-    }
+    private String dictionaryFileName;
+    public String getDictionaryFileName() {return dictionaryFileName;}
 
-    private List<String> wordsDictionary;
-    private List<String> blackWordsDictionary;
+    private GameStatus gameStatus;
+    public GameStatus getGameStatus() {return gameStatus;}
+    private void setGameStatus(GameStatus gameStatus) {this.gameStatus = gameStatus;}
 
-
-    public void setGameData(List<String> allWords, List<String> allBlackWords, int numCards,
-                            int numBlackCards, int rows, int columns){
-        this.wordsDictionary = allWords;
-        this.blackWordsDictionary = allBlackWords;
+    public void setGameData(List<String> allWords, List<Team> teams, int numCards,
+                            int numBlackCards, int rows, int columns, String gameName ,String dictionaryFileName){
+        this.dictionaryWords = allWords;
+        this.teams = teams;
         this.cardsCount = numCards;
         this.blackCardsCount = numBlackCards;
         this.rows = rows;
         this.columns =columns;
+        this.gameName = gameName;
+        this.dictionaryFileName = dictionaryFileName;
     }
 }

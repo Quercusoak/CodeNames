@@ -8,25 +8,33 @@ public class DTOTeam {
         numberOfCards=t.getNumberOfCards();
         score = t.getScore();
         numTurnsPlayed =t.getNumTurnsPlayed();
+        numDefiners = t.getNumDefiners();
+        numGuessers = t.getNumGuessers();
     }
 
-    private String name;
+    private final String name;
     public String getName() {
         return name;
     }
 
-    private int numberOfCards;
+    private final int numberOfCards;
     public int getNumberOfCards() {
         return numberOfCards;
     }
 
-    private int score;
+    private final int score;
     public int getScore(){
         return score;
     }
 
-    private int numTurnsPlayed;
+    private final int numTurnsPlayed;
     public int getNumTurnsPlayed() {
         return numTurnsPlayed;
     }
+
+    private final int numDefiners;
+    public int getNumDefiners() {return numDefiners;}
+
+    private final int numGuessers;
+    public int getNumGuessers() {return numGuessers;}
 }

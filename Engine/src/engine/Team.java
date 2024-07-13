@@ -3,22 +3,30 @@ package engine;
 import java.io.Serializable;
 
 public class Team implements Serializable {
-    public Team(String name, int numCards){
+    public Team(String name, int numCards, int definers, int guessers){
         this.name=name;
         numberOfCards=numCards;
+        numDefiners = definers;
+        numGuessers = guessers;
         score = 0;
         numTurnsPlayed = 0;
     }
 
-    private String name;
+    private final String name;
     public String getName() {
         return name;
     }
 
-    private int numberOfCards;
+    private final int numberOfCards;
     public int getNumberOfCards() {
         return numberOfCards;
     }
+
+    private final int numDefiners;
+    public int getNumDefiners() {return numDefiners;}
+
+    private final int numGuessers;
+    public int getNumGuessers() {return numGuessers;}
 
     private int score;
     public int getScore(){
