@@ -1,7 +1,6 @@
 package ui;
 
 import dto.*;
-import engine.GameSession;
 import exception.*;
 import engine.Engine;
 import engine.GameLogic;
@@ -156,16 +155,14 @@ public class Menu {
         } catch (EmptyTeamName e){
             System.out.println("All teams must have a name.");
         }catch (NotEnoughWordsException e){
-            System.out.println("Game can't start with " +e.getNumCards()+(e.isBlack() ? " black" :"")+
-                    " cards since there are "+e.getNumWords()+(e.isBlack() ? " black" :"") +" words in file.");
+            System.out.println("Game can't start with " +e.getNumCards()+" cards since there are "+e.getNumWords()+" words in file.");
         }catch (NotEnoughCardsException e){
             System.out.println("Can't hand out "+e.getSumCardsOfTeams()+" cards to playing teams- only "
                     +e.getNumCardsinGame()+" words in file.");
         }catch (GameLayoutException e){
-            System.out.println("Board ("+e.getRows()+" x "+e.getColumns()+")"
-                    +" not large enough to contain "+e.getNumCards()+" cards");
+            System.out.println("Board ("+e.getRows()+" x "+e.getColumns()+")"+" not large enough to contain "+e.getNumCards()+" cards");
         }catch (NotUniqueTeamNames e){
-            System.out.println("Team names must be unique, change name: "+e.getRepeatingName());
+            System.out.println("Team names must be unique, change duplicate names: "+e.getRepeatingName());
         }catch (ZeroCards e){
             System.out.println("Number of cards in game and per team must be positive number.");
         }
@@ -174,8 +171,8 @@ public class Menu {
     private void showGameParameters(){
         try {
             FileParams params = engine.displayGameParameters();
-            System.out.println("\nNumber of possible words: " + params.getGameWordsPossible());
-            System.out.println("Number of possible black words: " + params.getBlackWordsPossible());
+            System.out.println("\nNumber of possible words: " + params.getNumCards());
+            System.out.println("Number of possible black words: " + params.getNumBlackCards());
             System.out.println("Number of cards in game: " + params.getNumCards());
             System.out.println("Number of black cards in game: " + params.getNumBlackCards());
             params.getTeams().forEach((team, cards) -> System.out.println(team + ", number of cards: " + cards));
@@ -192,10 +189,6 @@ public class Menu {
             printBoard(false);
         } catch (NoFileLoadedException e) {
             System.out.println(e.getMessage());
-        } catch (NotEnoughDistinctBlackCards e){
-            System.out.println("Cant start game with "+e.getNumBlackCardsDesired()
-                    +" black cards since there are "+ e.getNumBlackCardsGenerated()
-                    +" distinct black words that don't show in word dictionary.");
         }
     }
 
