@@ -1,14 +1,11 @@
 package engine;
 
-
 import dto.*;
-
-import java.io.IOException;
 
 public interface Engine
 {
     /*recieves full path, always displayed*/
-    void readGameFile(String XMLpath);
+    GameData readGameFile(String XMLpath);
 
     /*Only displayed when file successfully loaded*/
     FileParams displayGameParameters();
