@@ -14,7 +14,7 @@ public class GameSession implements Serializable {
 
     public Team getPlayingTeam() {
         return teams.get(currTeamIndex);
-    };
+    }
 
     public GameCard[][] getBoard() {
         return board;
@@ -31,7 +31,7 @@ public class GameSession implements Serializable {
     public GameSession(int rows, int columns, List<Team> teams){
         board = new GameCard[rows][columns];
         this.teams = new ArrayList<>();
-        teams.forEach(t->this.teams.add(new Team(t.getName(), t.getNumberOfCards(), t.getNumDefiners(),t.getNumGuessers())));
+        teams.forEach(t->this.teams.add(new Team(t.getName(), t.getNumberOfCards(), t.getNumRequiredDefiners(),t.getNumRequiredGuessers())));
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;
     }

@@ -23,15 +23,14 @@ public class GameLogic implements Engine, Serializable {
 
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n\\t\\r]";
-    private final static String CHARS_TO_REMOVE_FROM_DICTIONARY_OLD = "[:;\"!@#$%^&*)(\\-_,.?]";
-    private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]"; //\p{P}\p{S}
+    private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]";
 
     @Override
-    public void readGameFile(String XMLpath) {
+    public GameData readGameFile(String XMLpath) {
         try {
             String extension = XMLpath.substring(XMLpath.lastIndexOf("."));
             if (extension.equals(".xml")) {
-                jaxbSchema(XMLpath);
+                return jaxbSchema(XMLpath);
             } else {
                 throw new FileNotXML();
             }
@@ -40,13 +39,13 @@ public class GameLogic implements Engine, Serializable {
         }
     }
 
-    private void jaxbSchema(String XMLpath){
+    private GameData jaxbSchema(String XMLpath){
         try {
             InputStream inputStream = new FileInputStream(XMLpath);
             JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_XML_GAME_PACKAGE_NAME);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             ECNGame ecnGame = (ECNGame) jaxbUnmarshaller.unmarshal(inputStream);
-            loadFileGameData(ecnGame, XMLpath);
+            return loadFileGameData(ecnGame, XMLpath);
         } catch (JAXBException e) {
             throw new FileInvalid();
         } catch (FileNotFoundException e){
@@ -54,7 +53,7 @@ public class GameLogic implements Engine, Serializable {
         }
     }
 
-    private void loadFileGameData(ECNGame ecnGame, String XMLpath){
+    private GameData loadFileGameData(ECNGame ecnGame, String XMLpath){
         int numWords =  ecnGame.getECNBoard().getCardsCount();
         int numBlackWords = ecnGame.getECNBoard().getBlackCardsCount();
         int numCardsinGame = numWords + numBlackWords;
@@ -75,8 +74,10 @@ public class GameLogic implements Engine, Serializable {
         List<Team> teams = getTeamsFromXML(ecnGame.getECNTeams().getECNTeam(), numWords);
 
         /*Keep collection of all game words, not just those in current game.*/
-        gameData = new GameData();
-        gameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), dictionaryFileName);
+        GameData mgameData = new GameData();
+        mgameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), dictionaryFileName);
+
+        return mgameData;
     }
 
     public FileParams displayGameParameters(){
@@ -216,7 +217,7 @@ public class GameLogic implements Engine, Serializable {
         Set<String> dictionary = new HashSet<>();
         try (BufferedReader in = new BufferedReader(
                 new InputStreamReader(
-                        Files.newInputStream(Paths.get(ecnDictionaryFile)))); ) {
+                        Files.newInputStream(Paths.get(ecnDictionaryFile))))) {
 
             in.lines()
                     .forEach(s-> dictionary.addAll(Arrays.stream(s
