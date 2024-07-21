@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
+
+import jakarta.servlet.http.HttpSession;
+import managers.AdminSessionManager;
 import managers.ServerManager;
 import managers.Utils;
 import java.nio.charset.StandardCharsets;
@@ -13,15 +16,10 @@ import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 
 
-@WebServlet(name = "Load File", urlPatterns = "/admin/loadFile")
+@WebServlet(name = "Add File", urlPatterns = "/admin/addFile")
 public class LoadFileServlet extends HttpServlet {
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
-        response.getWriter().println("Works!");
-    }
-
+    /*Load game file. Adds game to system.*/
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ServerManager serverManager = Utils.getServerManager(getServletContext());
@@ -29,37 +27,46 @@ public class LoadFileServlet extends HttpServlet {
         String encodedPath =request.getParameter("xmlPath");
         String XMLPath = URLDecoder.decode(encodedPath, String.valueOf(StandardCharsets.UTF_8));
 
+        response.setContentType("text/plain");
+        response.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession(false);
+        if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Only one admin session allowed at a time.");
+            return;
+        }
+
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
         if (XMLPath == null || XMLPath.isEmpty()) {
-            response.getWriter().println("No file selected");
+            response.getWriter().write("No file selected");
         }
         else{
             try {
                 serverManager.AddGameData(XMLPath);
+                response.setStatus(HttpServletResponse.SC_OK);
             } catch (FileNotXML e) {
-                response.getWriter().println("Not .xml file.");
+                response.getWriter().write("Not .xml file.");
             } catch (FileNotFound e){
-                 response.getWriter().println("File not found.");
+                 response.getWriter().write("File not found.");
             } catch (FileInvalid e){
-                 response.getWriter().println("File is wrong format for game.");
+                 response.getWriter().write("File is wrong format for game.");
             } catch (EmptyTeamName e){
-                 response.getWriter().println("All teams must have a name.");
+                 response.getWriter().write("All teams must have a name.");
             }catch (NotEnoughWordsException e){
-                 response.getWriter().println("Game can't start with " +e.getNumCards()+" cards since there are "+e.getNumWords()+" words in file.");
+                 response.getWriter().write("Game can't start with " +e.getNumCards()+" cards since there are "+e.getNumWords()+" words in file.");
             }catch (NotEnoughCardsException e){
-                 response.getWriter().println("Can't hand out "+e.getSumCardsOfTeams()+" cards to playing teams- only "
+                 response.getWriter().write("Can't hand out "+e.getSumCardsOfTeams()+" cards to playing teams- only "
                         +e.getNumCardsinGame()+" words in file.");
             }catch (GameLayoutException e){
-                 response.getWriter().println("Board ("+e.getRows()+" x "+e.getColumns()+")"+" not large enough to contain "+e.getNumCards()+" cards");
+                 response.getWriter().write("Board ("+e.getRows()+" x "+e.getColumns()+")"+" not large enough to contain "+e.getNumCards()+" cards");
             }catch (NotUniqueTeamNames e){
-                 response.getWriter().println("Team names must be unique, change duplicate names: "+e.getRepeatingName());
+                 response.getWriter().write("Team names must be unique, change duplicate names: "+e.getRepeatingName());
             }catch (ZeroCards e){
-                 response.getWriter().println("Number of cards in game and per team must be positive number.");
+                 response.getWriter().write("Number of cards in game and per team must be positive number.");
             }
         }
     }
 
 }
-
-/*Load game file. Adds game to system.*/
-/*Get a review of current game and status of games in system.*/
-/*View active game as an observer only.*/

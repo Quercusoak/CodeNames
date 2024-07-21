@@ -2,8 +2,8 @@ package dto;
 
 import engine.GameData;
 import engine.GameStatus;
-
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FileParams {
@@ -23,16 +23,39 @@ public class FileParams {
         return numBlackCards;
     }
 
-    public final String gameName;
-    public final GameStatus gameStatus;
-    public final int rows;
-    public final int cols;
-    public final String dictionaryFileName;
+    public String getGameName() {
+        return gameName;
+    }
+
+    public GameStatus getGameStatus() {
+        return gameStatus;
+    }
+
+    public int getRows() {
+        return rows;
+    }
+
+    public int getCols() {
+        return cols;
+    }
+
+    public String getDictionaryFileName() {
+        return dictionaryFileName;
+    }
+
+    private final String gameName;
+    private final GameStatus gameStatus;
+    private final int rows;
+    private final int cols;
+    private final String dictionaryFileName;
 
     private final int numDictionaryWords;
     private final int numCards;
     private final int numBlackCards;
     private final Map<String, Integer> teams = new HashMap<>();
+    private final TeamsList teamsList;
+
+    public List<DTOTeam> getDtoTeams() {return teamsList.getTeamList();}
 
 
     public FileParams(GameData gameData){
@@ -46,5 +69,6 @@ public class FileParams {
         numCards = gameData.getCardsCount();
         numBlackCards = gameData.getBlackCardsCount();
         gameData.getTeams().forEach(team ->this.teams.put(team.getName(),team.getNumberOfCards()));
+        this.teamsList = new TeamsList(gameData.getTeams());
     }
 }

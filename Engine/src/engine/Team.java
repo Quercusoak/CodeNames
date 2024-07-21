@@ -6,10 +6,12 @@ public class Team implements Serializable {
     public Team(String name, int numCards, int definers, int guessers){
         this.name=name;
         numberOfCards=numCards;
-        numDefiners = definers;
-        numGuessers = guessers;
+        numRequiredDefiners = definers;
+        numRequiredGuessers = guessers;
         score = 0;
         numTurnsPlayed = 0;
+        numRegisteredDefiners = 0;
+        numRegisteredGuessers = 0;
     }
 
     private final String name;
@@ -22,11 +24,17 @@ public class Team implements Serializable {
         return numberOfCards;
     }
 
-    private final int numDefiners;
-    public int getNumDefiners() {return numDefiners;}
+    private final int numRequiredDefiners;
+    public int getNumRequiredDefiners() {return numRequiredDefiners;}
 
-    private final int numGuessers;
-    public int getNumGuessers() {return numGuessers;}
+    private final int numRequiredGuessers;
+    public int getNumRequiredGuessers() {return numRequiredGuessers;}
+
+    private final int numRegisteredDefiners;
+    public int getNumRegisteredDefiners() {return numRegisteredDefiners;}
+
+    private final int numRegisteredGuessers;
+    public int getNumRegisteredGuessers() {return numRegisteredGuessers;}
 
     private int score;
     public int getScore(){

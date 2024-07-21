@@ -1,7 +1,7 @@
 public enum AdminMenuOptions {
-    LOADXML("Load new xml file."),
-    DISPLAYXML("Display game parametrs from file."),
-    VIEWGAME("Observe an ongoing game."),
+    LOAD_XML("Load new xml file."),
+    DISPLAY_XML("Display game parametrs from file."),
+    VIEW_GAME("Observe an ongoing game."),
     EXIT("Exit.");
 
     private final String option;

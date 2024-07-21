@@ -8,8 +8,10 @@ public class DTOTeam {
         numberOfCards=t.getNumberOfCards();
         score = t.getScore();
         numTurnsPlayed =t.getNumTurnsPlayed();
-        numDefiners = t.getNumDefiners();
-        numGuessers = t.getNumGuessers();
+        numRequiredDefiners = t.getNumRequiredDefiners();
+        numRequiredGuessers = t.getNumRequiredGuessers();
+        numRegisteredDefiners = t.getNumRegisteredDefiners();
+        numRegisteredGuessers = t.getNumRegisteredGuessers();
     }
 
     private final String name;
@@ -32,9 +34,15 @@ public class DTOTeam {
         return numTurnsPlayed;
     }
 
-    private final int numDefiners;
-    public int getNumDefiners() {return numDefiners;}
+    private final int numRequiredDefiners;
+    public int getNumRequiredDefiners() {return numRequiredDefiners;}
 
-    private final int numGuessers;
-    public int getNumGuessers() {return numGuessers;}
+    private final int numRequiredGuessers;
+    public int getNumRequiredGuessers() {return numRequiredGuessers;}
+
+    private final int numRegisteredDefiners;
+    public int getNumRegisteredDefiners() {return numRegisteredDefiners;}
+
+    private final int numRegisteredGuessers;
+    public int getNumRegisteredGuessers() {return numRegisteredGuessers;}
 }
