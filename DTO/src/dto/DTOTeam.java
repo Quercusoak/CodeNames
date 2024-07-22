@@ -1,17 +1,16 @@
 package dto;
 
-import engine.Team;
-
 public class DTOTeam {
-    public DTOTeam(Team t){
-        name=t.getName();
-        numberOfCards=t.getNumberOfCards();
-        score = t.getScore();
-        numTurnsPlayed =t.getNumTurnsPlayed();
-        numRequiredDefiners = t.getNumRequiredDefiners();
-        numRequiredGuessers = t.getNumRequiredGuessers();
-        numRegisteredDefiners = t.getNumRegisteredDefiners();
-        numRegisteredGuessers = t.getNumRegisteredGuessers();
+    public DTOTeam(String teamName, int numberOfCards, int score ,int numTurnsPlayed,
+                   int numRequiredDefiners, int numRegisteredDefiners, int numRequiredGuessers, int numRegisteredGuessers){
+        name=teamName;
+        this.numberOfCards= numberOfCards;
+        this.score = score;
+        this.numTurnsPlayed = numTurnsPlayed;
+        this.numRequiredDefiners = numRequiredDefiners;
+        this.numRequiredGuessers =numRequiredGuessers;
+        this.numRegisteredDefiners = numRegisteredDefiners;
+        this.numRegisteredGuessers = numRegisteredGuessers;
     }
 
     private final String name;

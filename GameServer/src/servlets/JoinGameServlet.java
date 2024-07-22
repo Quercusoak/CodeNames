@@ -1,7 +1,7 @@
 package servlets;
 
 import com.google.gson.Gson;
-import dto.DTOActiveGame;
+import dto.DTOGameData;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ public class JoinGameServlet extends HttpServlet {
         response.setContentType("application/json");
         try (PrintWriter out = response.getWriter()) {
             ServerManager serverManager = Utils.getServerManager(getServletContext());
-            List<DTOActiveGame> gamesList = serverManager.getActiveGamesList();
+            List<DTOGameData> gamesList = serverManager.getActiveGamesList();
             Gson gson = new Gson();
             String json = gson.toJson(gamesList);
             out.println(json);

@@ -1,8 +1,8 @@
 package engine;
 
+import dto.*;
 import engine.jaxb.generated.ECNTeam;
 import exception.*;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import dto.*;
 import engine.jaxb.generated.ECNGame;
 
 public class GameLogic implements Engine, Serializable {
@@ -26,7 +25,7 @@ public class GameLogic implements Engine, Serializable {
     private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]";
 
     @Override
-    public GameData readGameFile(String XMLpath) {
+    public DTOGameData readGameFile(String XMLpath) {
         try {
             String extension = XMLpath.substring(XMLpath.lastIndexOf("."));
             if (extension.equals(".xml")) {
@@ -39,7 +38,7 @@ public class GameLogic implements Engine, Serializable {
         }
     }
 
-    private GameData jaxbSchema(String XMLpath){
+    private DTOGameData jaxbSchema(String XMLpath){
         try {
             InputStream inputStream = new FileInputStream(XMLpath);
             JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_XML_GAME_PACKAGE_NAME);
@@ -53,7 +52,7 @@ public class GameLogic implements Engine, Serializable {
         }
     }
 
-    private GameData loadFileGameData(ECNGame ecnGame, String XMLpath){
+    private DTOGameData loadFileGameData(ECNGame ecnGame, String XMLpath){
         int numWords =  ecnGame.getECNBoard().getCardsCount();
         int numBlackWords = ecnGame.getECNBoard().getBlackCardsCount();
         int numCardsinGame = numWords + numBlackWords;
@@ -77,14 +76,35 @@ public class GameLogic implements Engine, Serializable {
         GameData mgameData = new GameData();
         mgameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), dictionaryFileName);
 
-        return mgameData;
+        return getDTOGameDataFromGame(mgameData);
     }
 
-    public FileParams displayGameParameters(){
+    public DTOGameData displayGameParameters(){
         if (gameData==null){
             throw new NoFileLoadedException();
         }
-        return new FileParams(gameData);
+
+        /*List<DTOTeam> teams = new ArrayList<>();
+        gameData.getTeams().forEach(t-> teams.add(getDTOTeamFromTeam(t)));
+
+        return new DTOGameData(gameData.getGameName(), gameData.getGameStatus(),gameData.getDictionaryFileName(), gameData.getDictionaryWords().size(),
+                gameData.getCardsCount(),gameData.getBlackCardsCount(),gameData.getRows(),gameData.getColumns(), teams,new ArrayList<>());*/
+        return getDTOGameDataFromGame(gameData);
+    }
+
+    private DTOGameData getDTOGameDataFromGame(GameData gameData) {
+        List<DTOCard> cards = new ArrayList<>();
+        if (game != null) {
+            game.getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
+                    card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
+                    card.isBlack(), card.getCardNumber(), card.isFound())));
+        }
+
+        List<DTOTeam> teams = new ArrayList<>();
+        gameData.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
+
+        return new DTOGameData(gameData.getGameName(), gameData.getGameStatus(), gameData.getDictionaryFileName(), gameData.getDictionaryWords().size(),
+                gameData.getCardsCount(), gameData.getBlackCardsCount(), gameData.getRows(), gameData.getColumns(), teams, cards);
     }
 
     public void startGame(){
@@ -143,14 +163,27 @@ public class GameLogic implements Engine, Serializable {
         if (game==null){
             throw new GameInactiveException();
         }
-        return new DTOBoard(game.getBoard(), gameData.getRows(), gameData.getColumns(),game.getCards().size());
+
+        GameCard[][] board = game.getBoard();
+        List<DTOCard> cards =  new ArrayList<>();
+        int rows = gameData.getRows(), columns = gameData.getColumns();
+        for (int i = 0; i < Math.min((rows * columns), game.getCards().size()); i++) {
+            GameCard card = board[i / columns][i % columns];
+            cards.add(i, new DTOCard(card.getWord(),
+                    card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
+                    card.isBlack(),card.getCardNumber(), card.isFound()
+            ));
+        }
+
+        return new DTOBoard(cards, gameData.getRows(), gameData.getColumns());
     }
 
     public DTOTeam getCurrentTeam(){
         if (game==null){
             throw new GameInactiveException();
         }
-        return new DTOTeam(game.getPlayingTeam());
+
+        return getDTOTeamFromTeam(game.getPlayingTeam());
     }
 
     @Override
@@ -197,7 +230,7 @@ public class GameLogic implements Engine, Serializable {
             guessStatus = TurnGuessStatus.NEUTRAL;
         }
 
-        return new TurnStatus(guessStatus,teamWhoseCardItIs);
+        return new TurnStatus(guessStatus,teamWhoseCardItIs==null? null : getDTOTeamFromTeam(teamWhoseCardItIs));
     }
 
     @Override
@@ -208,9 +241,9 @@ public class GameLogic implements Engine, Serializable {
         game.nextTeam();
     }
 
-    public TeamsList getTeams(){
-        return new TeamsList(game.getTeams());
-    }
+//    public TeamsList getTeams(){
+//        return new TeamsList(game.getTeams());
+//    }
 
     private List<String> getWordsFromXML(String ecnDictionaryFile, int numCardsinGame){
         /*Get the words from ECN-Dictionary-File*/
@@ -278,5 +311,10 @@ public class GameLogic implements Engine, Serializable {
         ecnTeams.forEach(t -> teams.add(new Team(t.getName(), t.getCardsCount(), t.getDefiners(),t.getGuessers())));
 
         return teams;
+    }
+
+    private DTOTeam getDTOTeamFromTeam(Team t){
+        return new DTOTeam(t.getName(),t.getNumberOfCards(), t.getScore(), t.getNumTurnsPlayed(), t.getNumRequiredDefiners(),
+                t.getNumRequiredGuessers(), t.getNumRegisteredDefiners(), t.getNumRegisteredGuessers());
     }
 }

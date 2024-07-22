@@ -1,4 +1,4 @@
-package engine;
+package dto;
 
 public enum GameStatus {
     PENDING,

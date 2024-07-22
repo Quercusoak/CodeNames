@@ -1,19 +1,18 @@
 package dto;
 
-import engine.Team;
 
 public class TurnStatus {
     private TurnGuessStatus status;
-    private Team team;
+    private DTOTeam team;
     private String msg;
 
-    public TurnStatus(TurnGuessStatus s,Team t){
+    public TurnStatus(TurnGuessStatus s,DTOTeam t){
         status = s;
         team = t;
         msg = s.toString() + ((t!=null)? (t.getName() + (s.getVictory()? " Score: "+t.getScore() :"")): "");
     }
 
-    public Team getTeam() {
+    public DTOTeam getTeam() {
         return team;
     }
 

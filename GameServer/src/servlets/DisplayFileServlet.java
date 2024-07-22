@@ -1,6 +1,6 @@
 package servlets;
 
-import dto.FileParams;
+import dto.DTOGameData;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ public class DisplayFileServlet  extends HttpServlet{
 
         response.setContentType("application/json");
         try (PrintWriter out = response.getWriter()) {
-            List<FileParams> gamesList = serverManager.getGameDataList();
+            List<DTOGameData> gamesList = serverManager.getGameDataList();
             Gson gson = new Gson();
             String json = gson.toJson(gamesList);
             out.println(json);

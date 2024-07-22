@@ -1,32 +1,33 @@
 package managers;
-import dto.DTOActiveGame;
-import dto.FileParams;
+import dto.DTOGameData;
+import dto.GameStatus;
 import engine.GameLogic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ServerManager {
     private final GameLogic gameLogic;
-    private final List<FileParams> gameDataList;
-    private final List<DTOActiveGame> activeGameList;
+    private final List<DTOGameData> gameDataList;
     //List<Players> players;
 
     public ServerManager() {
         gameLogic = new engine.GameLogic();
         gameDataList = new ArrayList<>();
-        activeGameList = new ArrayList<>();
     }
 
     public void AddGameData(String XMLPth) {
-        gameDataList.add(new FileParams(gameLogic.readGameFile(XMLPth)));
+        gameDataList.add(gameLogic.readGameFile(XMLPth));
     }
 
-    public List<FileParams> getGameDataList() {
+    public List<DTOGameData> getGameDataList() {
         return gameDataList;
     }
 
-    public List<DTOActiveGame> getActiveGamesList() {
-        return activeGameList;
+    public List<DTOGameData> getActiveGamesList() {
+        return gameDataList.stream()
+                .filter(g-> g.getGameStatus().equals(GameStatus.ACTIVE))
+                .collect(Collectors.toList());
     }
 }

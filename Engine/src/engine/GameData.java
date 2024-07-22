@@ -1,12 +1,15 @@
 package engine;
 
+import dto.GameStatus;
+
 import java.io.Serializable;
 import java.util.List;
 
 public class GameData implements Serializable {
 
     public GameData(){
-        gameStatus = GameStatus.PENDING;
+        setGameStatus(GameStatus.PENDING);
+        //gameStatus = GameStatus.PENDING;
     }
 
     private int cardsCount;

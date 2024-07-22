@@ -5,10 +5,10 @@ import dto.*;
 public interface Engine
 {
     /*recieves full path, always displayed*/
-    GameData readGameFile(String XMLpath);
+    DTOGameData readGameFile(String XMLpath);
 
     /*Only displayed when file successfully loaded*/
-    FileParams displayGameParameters();
+    DTOGameData displayGameParameters();
 
     void startGame();
 
@@ -20,5 +20,5 @@ public interface Engine
 
     DTOTeam getCurrentTeam();
 
-    TeamsList getTeams();
+//    TeamsList getTeams();
 }

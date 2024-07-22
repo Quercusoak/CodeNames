@@ -41,9 +41,9 @@ public class Player {
     private int getUserSelection(int numOptions){
         Scanner scanner = new Scanner(System.in);
         int userInput;
-        int userSelection = 0;
+        int userSelection = -1;
 
-        while (userSelection==0) {
+        while (userSelection==-1) {
             try {
                 userInput = Integer.parseInt(scanner.nextLine());
                 if (userInput > 0 && userInput <=numOptions) {

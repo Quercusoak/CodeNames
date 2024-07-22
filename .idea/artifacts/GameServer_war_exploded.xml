@@ -12,6 +12,7 @@
           <element id="artifact" artifact-name="Engine:jar" />
           <element id="artifact" artifact-name="Exceptions:jar" />
           <element id="library" level="project" name="gson-2.8.8" />
+          <element id="artifact" artifact-name="DTO:jar" />
         </element>
       </element>
       <element id="javaee-facet-resources" facet="GameServer/web/Web" />
