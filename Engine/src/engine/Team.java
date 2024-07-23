@@ -87,4 +87,10 @@ public class Team implements Serializable {
         }
         return playerAdded;
     }
+
+    public void clearTeam(){
+        players.clear();
+        numRegisteredDefiners = 0;
+        numRegisteredGuessers = 0;
+    }
 }

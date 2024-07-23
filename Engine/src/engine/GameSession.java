@@ -1,3 +1,4 @@
+/*
 package engine;
 
 import java.io.Serializable;
@@ -30,8 +31,12 @@ public class GameSession implements Serializable {
 
     public GameSession(int rows, int columns, List<Team> teams){
         board = new GameCard[rows][columns];
-        this.teams = new ArrayList<>();
-        teams.forEach(t->this.teams.add(new Team(t.getName(), t.getNumberOfCards(), t.getNumRequiredDefiners(),t.getNumRequiredGuessers())));
+        */
+/*this.teams = new ArrayList<>();
+        teams.forEach(t->this.teams.add(new Team(t.getName(), t.getNumberOfCards(), t.getNumRequiredDefiners(),t.getNumRequiredGuessers())));*//*
+
+
+        this.teams = teams;
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;
     }
@@ -47,3 +52,4 @@ public class GameSession implements Serializable {
         currTeamIndex = (currTeamIndex == (teams.size()-1))? 0: currTeamIndex+1;
     }
 }
+*/

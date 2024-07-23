@@ -5,20 +5,20 @@ import dto.*;
 public interface Engine
 {
     /*recieves full path, always displayed*/
-    DTOGameData readGameFile(String XMLpath);
+    GameData readGameFile(String XMLpath);
 
     /*Only displayed when file successfully loaded*/
-    DTOGameData displayGameParameters();
+    DTOGameData displayGameParameters(GameData game);
 
-    void startGame();
+    void startGame(GameData game);
 
-    TurnStatus playTurn(Integer cardNum);
+    TurnStatus playTurn(Integer cardNum, GameData game);
 
-    void turnEnd();
+    void turnEnd(GameData game);
 
-    DTOBoard getGameBoard();
+    DTOBoard getGameBoard(GameData game);
 
-    DTOTeam getCurrentTeam();
+    DTOTeam getCurrentTeam(GameData game);
 
 //    TeamsList getTeams();
 }

@@ -2,13 +2,14 @@ package engine;
 import dto.DTOGameData;
 import dto.DTOTeam;
 import dto.GameStatus;
+import dto.Role;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class GameManager {
     private final GameLogic gameLogic;
-    private final List<DTOGameData> gameDataList;
+    private final List<GameData> gameDataList;
     private final Set<String> playerSet;
 
     public GameManager() {
@@ -21,37 +22,61 @@ public class GameManager {
         gameDataList.add(gameLogic.readGameFile(XMLPth));
     }
 
-    public List<DTOGameData> getGameDataList() {
+    public List<GameData> getGameDataList() {
         return gameDataList;
     }
 
-    public List<DTOGameData> getActiveGamesList() {
+    public List<GameData> getActiveGamesList() {
         return gameDataList.stream()
                 .filter(g-> g.getGameStatus().equals(GameStatus.ACTIVE))
                 .collect(Collectors.toList());
     }
 
-    public List<DTOGameData> getPendingGamesList() {
+    public List<GameData> getPendingGamesList() {
         return gameDataList.stream()
                 .filter(g-> g.getGameStatus().equals(GameStatus.PENDING))
                 .collect(Collectors.toList());
     }
 
     public boolean addPlayerToGame(String playerName, String gameName, String teamName, String role) {
-        Optional<DTOGameData> game = gameDataList.stream()
+        Optional<GameData> game = gameDataList.stream()
                 .filter(g->g.getGameName().equals(gameName))
                 .findFirst();
 
-        game.ifPresent(g-> {
-            Optional<DTOTeam> team = g.getDtoTeams().stream()
-                    .filter(t->t.getName().equals(teamName))
-                    .findFirst();
-            team.ifPresent(t->{
-                //
-                t.getName();
-            });
-                });
+        if(!game.isPresent()) {
+            return false;
+        }
+        Optional<Team> team = game.get().getTeams().stream()
+                .filter(t->t.getName().equals(teamName))
+                .findFirst();
+
+        if(!team.isPresent()) {
+            return false;
+        }
+
+        if (team.get().addPlayer(playerName,Role.valueOf(role))){
+            checkGameReady(game.get());
+            return true;
+        }
+
         return false;
+    }
+
+    //For a game we added a player to- check if ready to begin
+    private void checkGameReady(GameData game){
+
+        long availableTeams = game.getTeams().stream()
+                .filter(t -> !(t.getNumRegisteredDefiners()==t.getNumRequiredDefiners() && t.getNumRegisteredGuessers()==t.getNumRequiredGuessers()))
+                .count();
+
+        if (0 == availableTeams){
+            gameLogic.startGame(game);
+        }
+
+    }
+
+    public void playTurn(GameData game) {
+
     }
 
     public synchronized void addPlayer(String username) {
