@@ -40,7 +40,7 @@ public class Admin {
         login();
     }
 
-    public void login(){
+    private void login(){
         Request request = new Request.Builder()
                 .url(Constants.ADMIN_LOGIN)
                 .get()
@@ -74,12 +74,12 @@ public class Admin {
         }
     }
 
-    public void menu() {
+    private void menu() {
         boolean exit = false;
         while (!exit) {
             showMenu();
             try {
-                switch (AdminMenuOptions.values()[ClientUtils.getUserSelection(AdminMenuOptions.values().length)]) {
+                switch (AdminMenuOptions.values()[ClientUtils.getUserSelection(AdminMenuOptions.values().length , false)]) {
                     case LOAD_XML:
                         addFile();
                         break;
@@ -211,13 +211,13 @@ public class Admin {
         });
 
         /*Get admin's selection and display the selcted game:*/
-        DTOGameData game = gamesList.get(ClientUtils.getUserSelection(gamesList.size()));
+        DTOGameData game = gamesList.get(ClientUtils.getUserSelection(gamesList.size() , false));
         dynamicGameStatus(game);
         int optionSelected;
 
         do {
             System.out.println("1) View dynamic game status\n2) Return to main menu");
-            optionSelected = ClientUtils.getUserSelection(2);
+            optionSelected = ClientUtils.getUserSelection(2,false);
             if (optionSelected == 1) {
                 dynamicGameStatus(game);
             }
@@ -226,6 +226,6 @@ public class Admin {
 
     private void dynamicGameStatus(DTOGameData game){
         ClientUtils.printBoard(game.getCards(), game.getRows(), game.getCols());
-        ClientUtils.printTeamList(game.getDtoTeams());
+        ClientUtils.printTeamsRunningScore(game.getDtoTeams());
     }
 }

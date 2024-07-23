@@ -74,7 +74,7 @@ public class GameLogic implements Engine, Serializable {
 
         /*Keep collection of all game words, not just those in current game.*/
         GameData mgameData = new GameData();
-        mgameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), dictionaryFileName);
+        mgameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), ecnGame.getECNDictionaryFile());
 
         return getDTOGameDataFromGame(mgameData);
     }
@@ -315,6 +315,6 @@ public class GameLogic implements Engine, Serializable {
 
     private DTOTeam getDTOTeamFromTeam(Team t){
         return new DTOTeam(t.getName(),t.getNumberOfCards(), t.getScore(), t.getNumTurnsPlayed(), t.getNumRequiredDefiners(),
-                t.getNumRequiredGuessers(), t.getNumRegisteredDefiners(), t.getNumRegisteredGuessers());
+                 t.getNumRegisteredDefiners(), t.getNumRequiredGuessers(),t.getNumRegisteredGuessers());
     }
 }

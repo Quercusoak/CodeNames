@@ -1,4 +1,4 @@
-package servlets;
+package servlets.admin;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,8 +23,7 @@ public class AdminLogoutServlet extends HttpServlet {
                 AdminSessionManager.setAdminLoggedIn(false);
             }
 
-            response.setContentType("text/plain");
-            response.setCharacterEncoding("UTF-8");
+            response.setContentType("text/plain;charset=UTF-8");
             response.getWriter().write("Admin logout successful.");
         }
     }

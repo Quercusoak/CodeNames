@@ -1,4 +1,4 @@
-package servlets;
+package servlets.admin;
 
 import exception.*;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,7 +9,7 @@ import java.net.URLDecoder;
 
 import jakarta.servlet.http.HttpSession;
 import managers.AdminSessionManager;
-import managers.ServerManager;
+import engine.GameManager;
 import managers.Utils;
 import java.nio.charset.StandardCharsets;
 
@@ -22,13 +22,12 @@ public class LoadFileServlet extends HttpServlet {
     /*Load game file. Adds game to system.*/
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        ServerManager serverManager = Utils.getServerManager(getServletContext());
+        GameManager gameManager = Utils.getServerManager(getServletContext());
 
         String encodedPath =request.getParameter("xmlPath");
         String XMLPath = URLDecoder.decode(encodedPath, String.valueOf(StandardCharsets.UTF_8));
 
-        response.setContentType("text/plain");
-        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/plain;charset=UTF-8");
 
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
@@ -44,7 +43,7 @@ public class LoadFileServlet extends HttpServlet {
         }
         else{
             try {
-                serverManager.AddGameData(XMLPath);
+                gameManager.AddGameData(XMLPath);
                 response.setStatus(HttpServletResponse.SC_OK);
             } catch (FileNotXML e) {
                 response.getWriter().write("Not .xml file.");

@@ -1,4 +1,4 @@
-package servlets;
+package servlets.admin;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -13,10 +13,10 @@ public class AdminLoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+        response.setContentType("text/plain;charset=UTF-8");
+
         synchronized (AdminSessionManager.class) {
             if (AdminSessionManager.isAdminLoggedIn()) {
-                response.setContentType("text/plain");
-                response.setCharacterEncoding("UTF-8");
                 response.getWriter().write("Admin already logged in.");
                 return;
             }
@@ -24,8 +24,6 @@ public class AdminLoginServlet extends HttpServlet {
             HttpSession session = request.getSession(true);
             session.setAttribute(AdminSessionManager.ADMIN_SESSION_KEY, true);
             AdminSessionManager.setAdminLoggedIn(true);
-            response.setContentType("text/plain");
-            response.setCharacterEncoding("UTF-8");
             response.getWriter().write("Admin login successful.");
         }
     }

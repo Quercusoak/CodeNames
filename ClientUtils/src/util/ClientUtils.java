@@ -10,15 +10,24 @@ import java.util.stream.Collectors;
 public class ClientUtils {
 
     private final static String SELECTION_OUT_OF_BOUNDS = "Input option number from list.";
+    private static final Scanner scanner = new Scanner(System.in);
+    private final static String GO_BACK = "q";
+    public final static int USER_SELECTED_QUIT = -1;
 
-    public static int getUserSelection(int numOptions){
-        Scanner scanner = new Scanner(System.in);
+    public static int getUserSelection(int numOptions, boolean canUserQuit){
         int userInput;
         int userSelection = -1;
+        String userStr;
 
         while (userSelection==-1) {
             try {
-                userInput = Integer.parseInt(scanner.nextLine());
+                userStr = scanner.nextLine();
+
+                if (canUserQuit && userStr.equals(GO_BACK)){
+                    return USER_SELECTED_QUIT;
+                }
+
+                userInput = Integer.parseInt(userStr);
                 if (userInput > 0 && userInput <=numOptions) {
                     userSelection = userInput-1;
                 }
@@ -34,12 +43,8 @@ public class ClientUtils {
 
     public static void printGameData(List<DTOGameData> gameList){
         gameList.forEach(game -> {
-            System.out.println("\nGame name: " + game.getGameName());
-            System.out.println("Status: " + game.getGameStatus());
-            System.out.println("Board: " + game.getRows() + " x " + game.getCols());
-            System.out.println("Dictionary file: " + game.getDictionaryFileName() + ", number of unique words: " + game.getNumDictionaryWords());
-            System.out.println("Number of cards in game: " + game.getNumCards());
-            System.out.println("Number of black cards in game: " + game.getNumBlackCards());
+            System.out.println();
+            printGameInfo(game);
 
             game.getDtoTeams().forEach(team -> {
                 System.out.println("Team: " + team.getName());
@@ -50,7 +55,34 @@ public class ClientUtils {
         });
     }
 
-    public static void printTeamList(List<DTOTeam> teamsList){
+    public static void printAllGames(List<DTOGameData> gameList){
+        gameList.forEach(game -> {
+            System.out.print("\n"+gameList.indexOf(game)+1 +") ");
+            printGameInfo(game);
+            printTeamsInfo(game.getDtoTeams());
+        });
+    }
+
+    public static void printTeamsInfo(List<DTOTeam> teamsList) {
+        teamsList.forEach(team -> {
+            System.out.print(teamsList.indexOf(team)+1 +") ");
+            System.out.println("Team " + team.getName());
+            System.out.println("\t" + team.getNumberOfCards()+" Words to guess");
+            System.out.println("\t"+team.getNumRegisteredDefiners()+"\\" + team.getNumRequiredDefiners() + " Definers");
+            System.out.println("\t" +team.getNumRegisteredGuessers()+"\\"+ team.getNumRequiredGuessers() + " Guessers");
+        });
+    }
+
+    private static void printGameInfo(DTOGameData game) {
+        System.out.println("Game name: " + game.getGameName());
+        System.out.println("Status: " + game.getGameStatus());
+        System.out.println("Board: " + game.getRows() + " x " + game.getCols());
+        System.out.println("Dictionary file: " + game.getDictionaryFileName() + ", number of unique words: " + game.getNumDictionaryWords());
+        System.out.println("Number of cards in game: " + game.getNumCards());
+        System.out.println("Number of black cards in game: " + game.getNumBlackCards());
+    }
+
+    public static void printTeamsRunningScore(List<DTOTeam> teamsList){
         teamsList.forEach(t -> {
             System.out.println("\n"+t.getName()+": "+t.getScore()+"\\"+t.getNumberOfCards());
             System.out.println("Number of turns played: " + t.getNumTurnsPlayed());

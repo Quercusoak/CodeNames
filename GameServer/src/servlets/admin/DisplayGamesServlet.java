@@ -1,6 +1,5 @@
-package servlets;
+package servlets.admin;
 
-import com.google.gson.Gson;
 import dto.DTOGameData;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,24 +7,25 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import managers.AdminSessionManager;
-import managers.ServerManager;
+import engine.GameManager;
 import managers.Utils;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-/*View active game as an observer only.*/
-@WebServlet(name = "Join Active Game", urlPatterns = "/admin/joinGame")
-public class JoinGameServlet extends HttpServlet {
+@WebServlet(name = "Display Games", urlPatterns = "/admin/gamesList")
+public class DisplayGamesServlet extends HttpServlet{
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+        GameManager gameManager = Utils.getServerManager(getServletContext());
+
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
-            response.setContentType("text/plain");
-            response.setCharacterEncoding("UTF-8");
+            response.setContentType("text/plain;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Only one admin session allowed at a time.");
             return;
@@ -33,8 +33,7 @@ public class JoinGameServlet extends HttpServlet {
 
         response.setContentType("application/json");
         try (PrintWriter out = response.getWriter()) {
-            ServerManager serverManager = Utils.getServerManager(getServletContext());
-            List<DTOGameData> gamesList = serverManager.getActiveGamesList();
+            List<DTOGameData> gamesList = gameManager.getGameDataList();
             Gson gson = new Gson();
             String json = gson.toJson(gamesList);
             out.println(json);

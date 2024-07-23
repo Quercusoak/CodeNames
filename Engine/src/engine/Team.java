@@ -1,6 +1,10 @@
 package engine;
 
+import dto.Role;
+
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Team implements Serializable {
     public Team(String name, int numCards, int definers, int guessers){
@@ -12,6 +16,7 @@ public class Team implements Serializable {
         numTurnsPlayed = 0;
         numRegisteredDefiners = 0;
         numRegisteredGuessers = 0;
+        players = new HashMap<>(numRequiredDefiners+numRequiredGuessers);
     }
 
     private final String name;
@@ -30,10 +35,10 @@ public class Team implements Serializable {
     private final int numRequiredGuessers;
     public int getNumRequiredGuessers() {return numRequiredGuessers;}
 
-    private final int numRegisteredDefiners;
+    private int numRegisteredDefiners;
     public int getNumRegisteredDefiners() {return numRegisteredDefiners;}
 
-    private final int numRegisteredGuessers;
+    private int numRegisteredGuessers;
     public int getNumRegisteredGuessers() {return numRegisteredGuessers;}
 
     private int score;
@@ -51,5 +56,35 @@ public class Team implements Serializable {
     }
     public void incTurnCounter() {
         numTurnsPlayed++;
+    }
+
+    private final Map<String, Role> players;
+
+    public boolean addPlayer(String name, Role role){
+        boolean playerAdded = false;
+
+        if (players.size()>=numRequiredDefiners+numRequiredGuessers){
+            return false;
+        }
+
+        switch (role.getNumber()){
+            case 1:
+                if (numRegisteredDefiners<numRequiredDefiners){
+                    players.put(name, role);
+                    numRegisteredDefiners++;
+                    playerAdded = true;
+                }
+                break;
+            case 2:
+                if (numRegisteredGuessers<numRequiredGuessers){
+                    players.put(name, role);
+                    numRegisteredGuessers++;
+                    playerAdded = true;
+                }
+                break;
+            default:
+                break;
+        }
+        return playerAdded;
     }
 }

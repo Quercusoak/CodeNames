@@ -7,5 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ClientUtils" />
+    <orderEntry type="module" module-name="DTO" />
+    <orderEntry type="library" name="okhttp-4.9.1" level="project" />
+    <orderEntry type="library" name="annotations-13.0" level="project" />
+    <orderEntry type="library" name="gson-2.8.8" level="project" />
   </component>
 </module>
