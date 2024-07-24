@@ -45,7 +45,18 @@ public class JoinGameServlet extends HttpServlet {
         if (username == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
+            String gameName = request.getParameter("gameName");
+            String teamName = request.getParameter("teamName");
+            String role = request.getParameter("role");
 
+            if (gameManager.addPlayerToGame(username, gameName, teamName, role)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+            else{
+                response.setContentType("text/plain;charset=UTF-8");
+                response.getWriter().write("Can't join selected game.");
+                response.setStatus(HttpServletResponse.SC_CONFLICT);
+            }
         }
     }
 }

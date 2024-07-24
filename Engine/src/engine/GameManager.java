@@ -1,10 +1,9 @@
 package engine;
-import dto.DTOGameData;
-import dto.DTOTeam;
 import dto.GameStatus;
 import dto.Role;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class GameManager {
@@ -39,7 +38,24 @@ public class GameManager {
     }
 
     public boolean addPlayerToGame(String playerName, String gameName, String teamName, String role) {
-        Optional<GameData> game = gameDataList.stream()
+
+        AtomicBoolean result = new AtomicBoolean(false);
+
+        gameDataList.stream()
+                .filter(g -> g.getGameName().equals(gameName))
+                .findFirst()
+                .ifPresent(game -> game.getTeams().stream()
+                        .filter(t -> t.getName().equals(teamName))
+                        .findFirst()
+                        .ifPresent(team -> {
+                            if (team.addPlayer(playerName, Role.valueOf(role))) {
+                                checkGameReady(game);
+                                result.set(true);
+                            }
+                        }));
+        return result.get();
+
+        /*Optional<GameData> game = gameDataList.stream()
                 .filter(g->g.getGameName().equals(gameName))
                 .findFirst();
 
@@ -59,7 +75,7 @@ public class GameManager {
             return true;
         }
 
-        return false;
+        return false;*/
     }
 
     //For a game we added a player to- check if ready to begin

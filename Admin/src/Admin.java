@@ -225,7 +225,7 @@ public class Admin {
     }
 
     private void dynamicGameStatus(DTOGameData game){
-        ClientUtils.printBoard(game.getCards(), game.getRows(), game.getCols());
+        ClientUtils.printBoard(game.getCards(), game.getRows(), game.getCols(),true);
         ClientUtils.printTeamsRunningScore(game.getDtoTeams());
     }
 }

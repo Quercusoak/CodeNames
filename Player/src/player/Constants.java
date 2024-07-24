@@ -15,8 +15,8 @@ public class Constants {
     public final static String GAME_STATUS = BASE_URL + "/status";
     public final static String PLAY_TURN = BASE_URL + "/playTurn";
 
-    public final static String MAIN_MENU ="Chose action:";
-    public final static String EXIT_MESSAGE = "Thanks for playing!";
+    public final static String MAIN_MENU ="\nChose action:";
+    public final static String EXIT_MESSAGE = "\nThanks for playing!";
     public final static String GO_BACK = "You can enter q to return to previous menu.";
     public final static String SELECT_GAME = "Enter number of game to join."+GO_BACK;
     public final static String SELECT_TEAM = "Enter number of team to join."+GO_BACK;

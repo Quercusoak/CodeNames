@@ -14,7 +14,7 @@ import java.util.*;
 
 import static player.Constants.*;
 
-public class Player {
+public class Player implements GameEndListener{
 
     public final static OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder()
             .cookieJar(new CookieJar() {
@@ -75,7 +75,7 @@ public class Player {
                 throw new IOException(response.body().string());
             }
             else {
-               return true;
+                return true;
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
@@ -83,12 +83,24 @@ public class Player {
         }
     }
 
+    private String executeRequest(Request request) throws IOException{
+        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException(response.body().string());
+            }
+            else {
+                return response.body().string();
+            }
+        }
+    }
+
     private void menu() {
         boolean exit = false;
         while (!exit) {
-            showMenu();
+            System.out.println(MAIN_MENU);
+            Arrays.stream(PlayerMenuOptions.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c));
             try {
-                switch (PlayerMenuOptions.values()[ClientUtils.getUserSelection(PlayerMenuOptions.values().length,false)]) {
+                switch (PlayerMenuOptions.values()[ClientUtils.getUserSelection(PlayerMenuOptions.values().length, false)]) {
                     case GAMES_INFO:
                         printAllGames();
                         break;
@@ -100,26 +112,30 @@ public class Player {
                         exit = true;
                         break;
                 }
-            } catch (RuntimeException e){
+            } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
         }
     }
 
-    private void showMenu(){
-        /*Enum of menu options*/
-        System.out.println();
-        System.out.println(MAIN_MENU);
-        Arrays.stream(PlayerMenuOptions.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c));
-    }
-
-    private void printAllGames(){
+    private void printAllGames() throws IOException {
         Request request = new Request.Builder()
                 .url(GAMES_LIST)
                 .get()
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+        String jsonData = executeRequest(request);
+        Type listType = new TypeToken<List<DTOGameData>>() {
+        }.getType();
+        List<DTOGameData> gamesList = GSON_INSTANCE.fromJson(jsonData, listType);
+
+        if (gamesList.isEmpty()) {
+            System.out.println("No games found");
+        } else {
+            ClientUtils.printAllGames(gamesList);
+        }
+
+/*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             }
@@ -136,16 +152,26 @@ public class Player {
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        }
+        }*/
     }
 
-    private void joinGame(){
+    private void joinGame() throws IOException {
         Request request = new Request.Builder()
                 .url(REGISTER_GAME)
                 .get()
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+        String jsonData = executeRequest(request);
+        Type listType = new TypeToken<List<DTOGameData>>() {}.getType();
+        List<DTOGameData> gameList = GSON_INSTANCE.fromJson(jsonData, listType);
+
+        if (gameList.isEmpty()) {
+            System.out.println("No pending games found");
+        } else {
+            selectGameToRegister(gameList);
+        }
+
+ /*       try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             }
@@ -162,11 +188,11 @@ public class Player {
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        }
+        }*/
     }
 
     /*Sync teams and roles to catch first*/
-    private void selectGameToRegister(List<DTOGameData> gameList){
+    private void selectGameToRegister(List<DTOGameData> gameList) throws IOException {
         gameList.forEach(game -> {
             System.out.print(gameList.indexOf(game)+1 +") "+game.getGameName());
             ClientUtils.printTeamsInfo(game.getDtoTeams());
@@ -239,30 +265,106 @@ public class Player {
         }
     }
 
-    private void registerGame(DTOGameData game, DTOTeam team, Role role){
+    private void registerGame(DTOGameData game, DTOTeam team, Role role) throws IOException {
 
         RequestBody body = new FormBody.Builder()
                 .add("gameName", game.getGameName())
                 .add("teamName", team.getName())
                 .add("role", role.toString())
                 .build();
-        
+
         Request request = new Request.Builder()
                 .url(REGISTER_GAME)
                 .post(body)
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+        executeRequest(request);
+        GamePlay activeGamePlay = new GamePlay(this, game,team,role);
+        //gamePlay(game.getGameName(),role);
+
+/*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             }
 
-            //??
+            gamePlay(game.getGameName());
 
         } catch (IOException e) {
             System.out.println(e.getMessage());
+        }*/
+    }
+
+    /*private void gamePlay(String gameName,Role role){
+        boolean gameEnded = false;
+        while (!gameEnded) {
+            System.out.println("\nChoose action:");
+            Arrays.stream(GameMenuOptions.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c));
+            try {
+                switch (GameMenuOptions.values()[ClientUtils.getUserSelection(GameMenuOptions.values().length,false)]) {
+                    case PLAY_TURN:
+                        playTurn(gameName,role);
+                        gameEnded = isGameEnded(gameName);
+                        break;
+                    case GAME_STATUS:
+                        //displayGameStatus();
+                        break;
+                }
+            } catch (RuntimeException e){
+                System.out.println(e.getMessage());
+            }
         }
     }
+
+    private void playTurn(String gameName, Role role) {
+        // if not teams turn, if not roles turn, if somebody else acted first
+        System.out.println("Input word group definition:");
+        String userName = scanner.nextLine();
+        switch (role) {
+            case DEFINER:
+                playTurnDefiner(gameName);
+                break;
+            case GUESSER:
+                break;
+        }
+    }
+
+    private void playTurnDefiner(String gameName){
+
+        System.out.println("Input word group definition:");
+        String definition = scanner.nextLine();
+        Integer numCargdsToGuess = getNumCardsToGuess(engine.getGameBoard().getCards().size(),GET_DEFINER_CARDS_NUM,isDefiner);
+    }
+
+    private Integer getNumCardsToGuess(int maxCardsNum, String msg,boolean isDefiner){
+        Integer numCargdsToGuess = 0;//I have to initialize but logically its meaningless
+        Scanner scanner = new Scanner(System.in);
+        boolean valid = false;
+        int min = isDefiner? 1 : 0; //team can quit on "0", definer must select a card
+
+        while (!valid){
+            try {
+                System.out.print(msg);
+                numCargdsToGuess = scanner.nextInt();
+
+                if (numCargdsToGuess>maxCardsNum || numCargdsToGuess<min) {
+                    throw new CardSelectionOutOfBound(maxCardsNum);
+                }
+                else {
+                    valid = true;
+                }
+            } catch (InputMismatchException e) {
+                scanner.nextLine(); //clear buffer
+                System.out.println("Input numbers only.");
+            }catch (CardSelectionOutOfBound e){
+                System.out.println(e.getMessage());
+            }
+        }
+        return numCargdsToGuess;
+    }
+
+    private boolean isGameEnded(String gameName){
+
+    }*/
 
     private void exit(){
 
@@ -271,7 +373,14 @@ public class Player {
                 .get()
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+        try{
+            System.out.println(executeRequest(request));
+            System.out.println(EXIT_MESSAGE);
+        } catch (IOException e){
+            System.out.println(e.getMessage());
+        }
+
+        /*try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             }
@@ -280,6 +389,11 @@ public class Player {
 
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        }
+        }*/
+    }
+
+    @Override
+    public void onGameEnd() {
+
     }
 }

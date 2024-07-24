@@ -64,6 +64,5 @@ public class DTOGameData {
         this.cols = cols;
         this.teamsList = teams;
         this.cards = cards;
-        //teams.forEach(t ->teamsList.put(team.getName(),team.getNumberOfCards()));
     }
 }

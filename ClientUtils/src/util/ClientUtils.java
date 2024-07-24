@@ -13,6 +13,8 @@ public class ClientUtils {
     private static final Scanner scanner = new Scanner(System.in);
     private final static String GO_BACK = "q";
     public final static int USER_SELECTED_QUIT = -1;
+    private final static String GAME_INACTIVE = "Must start the game";
+
 
     public static int getUserSelection(int numOptions, boolean canUserQuit){
         int userInput;
@@ -89,14 +91,16 @@ public class ClientUtils {
         });
     }
 
-    public static void printBoard(List<DTOCard> cards, int rows, int cols){
+    public static void printBoard(List<DTOCard> cards, int rows, int cols, boolean visible){
 
         List<String> cardWords = cards.stream().map(DTOCard::getWord).collect(Collectors.toList());
 
         List<String> cardInfo = new ArrayList<>();
         cards.forEach(card->{
             String str = "["+card.getCardNumber()+"] "+(card.isFound()? "V ":"X ");
-            str = str.concat((card.getTeam() != null) ? "(" + card.getTeam().getName() + ")" : (card.isBlack() ? "(BLACK)" : ""));
+            if (visible || card.isFound()) {
+                str = str.concat((card.getTeam() != null) ? "(" + card.getTeam().getName() + ")" : (card.isBlack() ? "(BLACK)" : ""));
+            }
             cardInfo.add(str);
         });
 
@@ -140,5 +144,23 @@ public class ClientUtils {
             System.out.print(sb);
         }
         System.out.println(str);
+    }
+
+    private void activeGameStatus(DTOGameData game,DTOTeam currentTeam, boolean isVisibile){
+        if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
+            printBoard(game.getCards(),game.getRows(),game.getCols(),isVisibile);
+            game.getDtoTeams().forEach(t -> {
+                printTeamScore(t);
+                System.out.println("Number of turns played: " + t.getNumTurnsPlayed());
+            });
+            System.out.println("Next turn: " + currentTeam.getName());
+        }
+        else{
+            System.out.println(GAME_INACTIVE);
+        }
+    }
+
+    private void printTeamScore(DTOTeam currentTeam){
+        System.out.println("\n"+currentTeam.getName()+": "+currentTeam.getScore()+"\\"+currentTeam.getNumberOfCards());
     }
 }

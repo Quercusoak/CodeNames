@@ -41,21 +41,23 @@ public class GameData implements Serializable {
         return teams;
     }
 
+
     private final GameCard[][] board;
+    public GameCard[][] getBoard() {
+        return board;
+    }
+
     private final Set<GameCard> cardsInGame;
+    public Set<GameCard> getCards() {
+        return cardsInGame;
+    }
+
     private int currTeamIndex;
 
     public Team getPlayingTeam() {
         return teams.get(currTeamIndex);
     }
 
-    public GameCard[][] getBoard() {
-        return board;
-    }
-
-    public Set<GameCard> getCards() {
-        return cardsInGame;
-    }
 
     public GameData(List<String> allWords, List<Team> teams, int numCards,
                             int numBlackCards, int rows, int columns, String gameName ,String dictionaryFileName){
