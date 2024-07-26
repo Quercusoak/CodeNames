@@ -9,40 +9,43 @@ import java.util.Set;
 
 public class GameData implements Serializable {
 
-    private String gameName;
+    private final String gameName;
     public String getGameName() {return gameName;}
 
     private GameStatus gameStatus;
     public GameStatus getGameStatus() {return gameStatus;}
     public void setGameStatus(GameStatus gameStatus) {this.gameStatus = gameStatus;}
 
-    private String dictionaryFileName;
+    private final String dictionaryFileName;
     public String getDictionaryFileName() {return dictionaryFileName;}
 
     public List<String> getDictionaryWords() {
         return dictionaryWords;
     }
-    private List<String> dictionaryWords;
+    private final List<String> dictionaryWords;
 
-    private int cardsCount;
+    private final int cardsCount;
     public int getCardsCount() {return cardsCount;}
 
-    private int blackCardsCount;
+    private final int blackCardsCount;
     public int getBlackCardsCount() { return blackCardsCount; }
 
-    private int rows;
+    private final int rows;
     public int getRows() { return rows;}
 
-    private int columns;
+    private final int columns;
     public int getColumns() {return columns;}
 
-    private List<Team> teams;
+    private final List<Team> teams;
     public List<Team> getTeams() {
         return teams;
     }
 
+    private GameSession activeGame;
+    public GameSession getActiveGame() {return activeGame;}
+    public void setActiveGame(GameSession activeGame) {this.activeGame = activeGame;}
 
-    private final GameCard[][] board;
+/*    private final GameCard[][] board;
     public GameCard[][] getBoard() {
         return board;
     }
@@ -56,7 +59,7 @@ public class GameData implements Serializable {
 
     public Team getPlayingTeam() {
         return teams.get(currTeamIndex);
-    }
+    }*/
 
 
     public GameData(List<String> allWords, List<Team> teams, int numCards,
@@ -70,12 +73,12 @@ public class GameData implements Serializable {
         this.rows = rows;
         this.columns =columns;
         this.teams = teams;
-        board = new GameCard[rows][columns];
+/*        board = new GameCard[rows][columns];
         cardsInGame = new HashSet<>();
-        currTeamIndex = 0;
+        currTeamIndex = 0;*/
     }
 
-    public void addCard(String word, Team team, boolean isBlack){
+/*    public void addCard(String word, Team team, boolean isBlack){
         cardsInGame.add(new GameCard(word, team, isBlack));
     }
     public void addCard(String word, boolean isBlack){
@@ -90,6 +93,8 @@ public class GameData implements Serializable {
     }
 
     public void nextTeam(){
-        currTeamIndex = (currTeamIndex == (teams.size()-1))? 0: currTeamIndex+1;
-    }
+        do {
+            currTeamIndex = (currTeamIndex == (teams.size() - 1)) ? 0 : currTeamIndex + 1;
+        }while (!teams.get(currTeamIndex).isTeamPlaying());
+    }*/
 }

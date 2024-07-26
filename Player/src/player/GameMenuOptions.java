@@ -1,8 +1,8 @@
 package player;
 
 public enum GameMenuOptions {
-    PLAY_TURN(1,"Play your turn."),
-    GAME_STATUS(2,"Display game status.");
+    GAME_STATUS(1,"Display game status."),
+    PLAY_TURN(2,"Play your turn.");
 
     private final String option;
     final int number;

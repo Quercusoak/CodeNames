@@ -31,8 +31,7 @@ public class LoadFileServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Only one admin session allowed at a time.");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED,"Only one admin session allowed at a time.");
             return;
         }
 
@@ -45,6 +44,7 @@ public class LoadFileServlet extends HttpServlet {
             try {
                 gameManager.AddGameData(XMLPath);
                 response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("File added successfully.");
             } catch (FileNotXML e) {
                 response.getWriter().write("Not .xml file.");
             } catch (FileNotFound e){

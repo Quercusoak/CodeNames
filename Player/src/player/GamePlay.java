@@ -1,15 +1,16 @@
 package player;
 
 import dto.*;
+import okhttp3.*;
 import util.ClientUtils;
-
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
-import static player.Constants.scanner;
+import static player.Constants.*;
+import static util.ClientUtils.printBoard;
 
 public class GamePlay {
 
@@ -22,15 +23,17 @@ public class GamePlay {
     private final static String EXIT_MESSAGE = "Thanks for playing! Goodbye!";
 
     private final GameEndListener listener;
-    private final DTOGameData game;
+    private final DTOActiveGame gameData;
     private final DTOTeam team;
     private final Role role;
+    private final OkHttpClient HTTP_CLIENT;
 
-    public GamePlay(GameEndListener listener, DTOGameData game, DTOTeam team, Role role){
+    public GamePlay(GameEndListener listener, DTOActiveGame game, DTOTeam team, Role role, OkHttpClient HTTP_CLIENT){
         this.listener = listener;
-        this.game = game;
+        this.gameData = game;
         this.team = team;
         this.role = role;
+        this.HTTP_CLIENT = HTTP_CLIENT;
         gamePlay();
     }
 
@@ -42,11 +45,15 @@ public class GamePlay {
             try {
                 switch (GameMenuOptions.values()[ClientUtils.getUserSelection(GameMenuOptions.values().length,false)]) {
                     case PLAY_TURN:
-                        playTurn();
-                        gameEnded = isGameEnded();
+                        try {
+                            playTurn();
+                        }catch (IOException e){
+                            throw new RuntimeException(e.getMessage());
+                        }
+                        //gameEnded = isGameEnded();
                         break;
                     case GAME_STATUS:
-                        //displayGameStatus();
+                        displayGameStatus();
                         break;
                 }
             } catch (RuntimeException e){
@@ -56,10 +63,8 @@ public class GamePlay {
         listener.onGameEnd();
     }
 
-    private void playTurn() {
+    private void playTurn() throws IOException {
         // if not teams turn, if not roles turn, if somebody else acted first
-        System.out.println("Input word group definition:");
-        String userName = scanner.nextLine();
         switch (role) {
             case DEFINER:
                 playTurnDefiner();
@@ -70,11 +75,23 @@ public class GamePlay {
         }
     }
 
-    private void playTurnDefiner(){
+    private void playTurnDefiner() throws IOException {
 
         System.out.println("Input word group definition:");
         String definition = scanner.nextLine();
-        Integer numCargdsToGuess = getNumCardsToGuess(game.getCards().size(),GET_DEFINER_CARDS_NUM,true);
+        Integer numCargdsToGuess = getNumCardsToGuess(gameData.getCardList().size(),GET_DEFINER_CARDS_NUM,true);
+
+        RequestBody body = new FormBody.Builder()
+                .add("definition", definition)
+                .add("numCargdsToGuess", String.valueOf(numCargdsToGuess))
+                .build();
+
+        Request request = new Request.Builder()
+                .url(PLAY_TURN)
+                .post(body)
+                .build();
+
+        executeRequest(request);
     }
 
     private Integer getNumCardsToGuess(int maxCardsNum, String msg,boolean isDefiner){
@@ -102,48 +119,83 @@ public class GamePlay {
         return numCargdsToGuess;
     }
 
-    private void playTurnGuesser(){
+    private void playTurnGuesser() throws IOException {
         int numGuesses = 0;
-        boolean stopPlaying =false;
+        boolean stopPlaying = false;
         Integer cardGuess;
-        TurnStatus guessOutcome;
 
-        System.out.println("\nTeam "+currentTeam.getName()+" start guessing word in definition: "+definition);
 
-        while (numGuesses<numCargdsToGuess && !stopPlaying) {
-            printBoard( !isDefiner);
-            cardGuess = getNumCardsToGuess(engine.getGameBoard().getCards().size(), GET_PLAYERS_CARD_GUESS, !isDefiner);
+//        TurnInfo turnInfo = getTurnInfo();
+        ActiveGameStatus activeGameStatus = getActiveGameStatus();
 
-            if (cardGuess.equals(QUIT_TURN)){
-                System.out.println("End of turn.");
-                stopPlaying = true;
-                printTeamScore(engine.getCurrentTeam());
+        System.out.println("\nTeam " + team.getName() + " start guessing word in definition: " /*+ turnInfo.getDefinitionToGuess()*/);
+
+        printBoard(gameData.getCardList(), gameData.getRows(), gameData.getColumns(), false);
+        cardGuess = getNumCardsToGuess(gameData.getCardList().size(), GET_PLAYERS_CARD_GUESS, false);
+
+        RequestBody body = new FormBody.Builder()
+                .add("cardNum", String.valueOf(cardGuess))
+                .build();
+
+        Request request = new Request.Builder()
+                .url(PLAY_TURN)
+                .post(body)
+                .build();
+
+        String jsonData = executeRequest(request);
+        TurnStatus guessOutcome = GSON_INSTANCE.fromJson(jsonData, TurnStatus.class);
+
+
+    }
+
+//    private TurnInfo getTurnInfo() throws IOException {
+//        Request request = new Request.Builder()
+//                .url(T)
+//                .post(body)
+//                .build();
+//
+//        String jsonData = executeRequest(request);
+//        TurnStatus guessOutcome = GSON_INSTANCE.fromJson(jsonData, TurnStatus.class);
+//
+//        return new TurnInfo("",team,1);
+//    }
+
+    private void displayGameStatus() throws IOException {
+
+        ActiveGameStatus game = getActiveGameStatus();
+
+        System.out.println("Game Status: " + game.getGameStatus());
+        printBoard(game.getBoard().getCards(),game.getBoard().getRows(),game.getBoard().getColumns(),role.equals(Role.DEFINER));
+        /*game.getDtoTeams().forEach(t->{
+            printTeamScore(t);
+            System.out.println("Number of turns played: " + t.getNumTurnsPlayed());
+        });*/
+        System.out.println("Next turn: " + game.getCurrentTeam().getName());
+    }
+
+    private ActiveGameStatus getActiveGameStatus() throws IOException {
+        Request request = new Request.Builder()
+                .url(GAME_STATUS)
+                .get()
+                .build();
+
+        String jsonData = executeRequest(request);
+
+        return GSON_INSTANCE.fromJson(jsonData, ActiveGameStatus.class);
+    }
+
+    private String executeRequest(Request request) throws IOException {
+        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException(response.body().string());
             }
-            else{
-                try{
-                    guessOutcome = engine.playTurn(cardGuess - 1); //-1 for board indexes
-                    printTeamScore(engine.getCurrentTeam());
-
-                    /*Check if game ended: by victory or black card.*/
-                    if (guessOutcome.getStatus().equals(TurnGuessStatus.BLACK) || guessOutcome.getStatus().getVictory()){
-                        stopPlaying = true;
-                        gameActiveFlag =false;
-                    }
-                    numGuesses++;
-                    printTurnStauts(guessOutcome);
-                }catch (CardAlreadyGuessed e){
-                    System.out.println("The word: "+e.getWord()+ " was already guessed.");
-                }catch (CardSelectionOutOfBound e){
-                    System.out.println(e.getMessage());
-                }
+            else {
+                return response.body().string();
             }
-        }
-        if (gameActiveFlag) {
-            System.out.println("End of turn.");
-            engine.turnEnd();
         }
     }
 
+/*
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private static void startLongPolling(String team) {
@@ -218,5 +270,5 @@ public class GamePlay {
 
     private boolean isGameEnded(){
 
-    }
+    }*/
 }

@@ -12,13 +12,13 @@ public interface Engine
 
     void startGame(GameData game);
 
-    TurnStatus playTurn(Integer cardNum, GameData game);
+    TurnStatus playTurn(int cardNum, GameSession game);
 
-    void turnEnd(GameData game);
+    void turnEnd(GameSession game);
 
-    DTOBoard getGameBoard(GameData game);
+    //DTOBoard getGameBoard(GameData game);
 
-    DTOTeam getCurrentTeam(GameData game);
+    //Team getCurrentTeam(GameData game);
 
 //    TeamsList getTeams();
 }

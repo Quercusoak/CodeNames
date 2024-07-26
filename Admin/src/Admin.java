@@ -1,4 +1,6 @@
 import com.google.gson.Gson;
+import dto.ActiveGameStatus;
+import dto.DTOActiveGame;
 import dto.DTOGameData;
 import okhttp3.*;
 import java.io.IOException;
@@ -17,6 +19,7 @@ public class Admin {
 
     private final static String MAIN_MENU ="Chose action:";
     private final static String EXIT_MESSAGE = "Admin logged out successfully.";
+    private final Gson gson = new Gson();
 
     public final static OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder()
             .cookieJar(new CookieJar() {
@@ -57,21 +60,23 @@ public class Admin {
         }
     }
 
-    private void logout(){
+    private void logout() throws IOException {
         System.out.println(EXIT_MESSAGE);
         Request request = new Request.Builder()
                 .url(Constants.ADMIN_LOGOUT)
                 .get()
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+        executeRequest(request);
+
+        /*try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 System.out.println(response.body().string());
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private void menu() {
@@ -94,7 +99,7 @@ public class Admin {
                         exit = true;
                         break;
                 }
-            } catch (RuntimeException e){
+            } catch (RuntimeException | IOException e){
                 System.out.println(e.getMessage());
             }
         }
@@ -107,7 +112,7 @@ public class Admin {
         Arrays.stream(AdminMenuOptions.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c));
     }
 
-    private void addFile() {
+    private void addFile() throws IOException {
 
         System.out.print("Enter full path of XML file: ");
         Scanner scanner = new Scanner(System.in);
@@ -131,7 +136,10 @@ public class Admin {
                 .post(body)
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+
+        System.out.println(executeRequest(request));
+
+     /*   try (Response response = HTTP_CLIENT.newCall(request).execute()) {
 
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
@@ -140,17 +148,29 @@ public class Admin {
             System.out.println("File added successfully.");
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        }
+        }*/
     }
 
-    private void displayGameDataFromFile() {
+    private void displayGameDataFromFile() throws IOException {
 
         Request request = new Request.Builder()
                 .url(Constants.GAMES_LIST)
                 .get()
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+
+        String jsonData = executeRequest(request);
+        Type listType = new TypeToken<List<DTOGameData>>() {}.getType();
+        List<DTOGameData> gamesList = gson.fromJson(jsonData, listType);
+
+        if (gamesList.isEmpty()) {
+            System.out.println("No games found");
+        }
+        else {
+            ClientUtils.printGameData(gamesList);
+        }
+
+/*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             }
@@ -168,16 +188,40 @@ public class Admin {
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        }
+        }*/
     }
 
-    private void observeActiveGame(){
+    private void observeActiveGame() throws IOException {
         Request request = new Request.Builder()
-                .url(Constants.OBSERVE_GAME)
+                .url(Constants.GAMES_TO_JOIN)
                 .get()
                 .build();
 
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+        String jsonData = executeRequest(request);
+        Type listType = new TypeToken<List<DTOGameData>>() {}.getType();
+        List<DTOGameData> gamesList = gson.fromJson(jsonData, listType);
+
+        if (gamesList.isEmpty()) {
+            System.out.println("No active games.");
+        }
+        else {
+            /*Displays al active games:*/
+            System.out.print("Select game to join as an observer: ");
+            gamesList.forEach(game -> {
+                System.out.print((gamesList.indexOf(game)+1)+") " + game.getGameName());
+                long numActiveTeams = game.getDtoTeams().stream()
+                        .filter(t -> t.getNumRegisteredDefiners()==t.getNumRequiredDefiners() && t.getNumRegisteredGuessers()==t.getNumRequiredGuessers())
+                        .count();
+                int numTeams = game.getDtoTeams().size();
+                System.out.println(", active teams: "+numActiveTeams+ "/"+numTeams);
+            });
+
+            /*Get admin's selection and display the selcted game:*/
+            DTOGameData game = gamesList.get(ClientUtils.getUserSelection(gamesList.size() , false));
+            joinGame(game);
+        }
+
+/*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             }
@@ -194,24 +238,26 @@ public class Admin {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
-    private void joinGame(List<DTOGameData> gamesList){
+    private void joinGame(DTOGameData game) throws IOException {
+        String url = HttpUrl
+                .parse(Constants.OBSERVE_GAME)
+                .newBuilder()
+                .addQueryParameter("gameName", game.getGameName())
+                .build()
+                .toString();
 
-        /*Displays al active games:*/
-        System.out.print("Select game to join as an observer: ");
-        gamesList.forEach(game -> {
-            System.out.print((gamesList.indexOf(game)+1)+") " + game.getGameName());
-            long numActiveTeams = game.getDtoTeams().stream()
-                    .filter(t -> t.getNumRegisteredDefiners()==t.getNumRequiredDefiners() && t.getNumRegisteredGuessers()==t.getNumRequiredGuessers())
-                    .count();
-            int numTeams = game.getDtoTeams().size();
-            System.out.println(", active teams: "+numActiveTeams+ "/"+numTeams);
-        });
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
 
-        /*Get admin's selection and display the selcted game:*/
-        DTOGameData game = gamesList.get(ClientUtils.getUserSelection(gamesList.size() , false));
+
+        String jsonData = executeRequest(request);
+        DTOActiveGame game = gson.fromJson(jsonData, DTOActiveGame.class);
+
         dynamicGameStatus(game);
         int optionSelected;
 
@@ -224,8 +270,19 @@ public class Admin {
         } while(optionSelected != 2);
     }
 
-    private void dynamicGameStatus(DTOGameData game){
-        ClientUtils.printBoard(game.getCards(), game.getRows(), game.getCols(),true);
+    private void dynamicGameStatus(DTOActiveGame game){
+        ClientUtils.printBoard(game.getCardList(),,true);
         ClientUtils.printTeamsRunningScore(game.getDtoTeams());
+    }
+
+    private String executeRequest(Request request) throws IOException{
+        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException(response.body().string());
+            }
+            else {
+                return response.body().string();
+            }
+        }
     }
 }

@@ -6,7 +6,8 @@ public enum TurnGuessStatus {
     OTHERTEAM("Wrong guess."),
     NEUTRAL("Wrong guess - card is neutral."),
     VICTORYCURRENTTEAM("Correct! All words found.",true),
-    VICTORYOTHERTEAM("Wrong guess. Other team found all words.",true);
+    VICTORYOTHERTEAM("Wrong guess. Other team found all words.",true),
+    TEAMSKIPPED("Team chose to quit guessing.");
 
     private String status;
     private boolean isVictory;

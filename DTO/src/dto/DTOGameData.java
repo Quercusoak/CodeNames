@@ -47,13 +47,14 @@ public class DTOGameData {
     private final List<DTOTeam> teamsList;
     public List<DTOTeam> getDtoTeams() {return teamsList;}
 
-    private List<DTOCard> cards;
-    public List<DTOCard> getCards() {
-        return cards;
-    }
+//    private List<DTOCard> cards;
+//    public List<DTOCard> getCards() {
+//        return cards;
+//    }
+
 
     public DTOGameData(String name, GameStatus status, String dictionaryFileName, int numDictionaryWords, int numCards,int numBlackCards,
-                       int rows, int cols ,List<DTOTeam> teams, List<DTOCard> cards){
+                       int rows, int cols ,List<DTOTeam> teams/*, List<DTOCard> cards*/){
         gameName = name;
         gameStatus = status;
         this.dictionaryFileName = dictionaryFileName;
@@ -63,6 +64,6 @@ public class DTOGameData {
         this.rows = rows;
         this.cols = cols;
         this.teamsList = teams;
-        this.cards = cards;
+//        this.cards = cards;
     }
 }

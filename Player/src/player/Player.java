@@ -279,7 +279,7 @@ public class Player implements GameEndListener{
                 .build();
 
         executeRequest(request);
-        GamePlay activeGamePlay = new GamePlay(this, game,team,role);
+        GamePlay activeGamePlay = new GamePlay(this, game,team,role, HTTP_CLIENT);
         //gamePlay(game.getGameName(),role);
 
 /*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {

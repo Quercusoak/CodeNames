@@ -146,9 +146,10 @@ public class ClientUtils {
         System.out.println(str);
     }
 
+    //printing for admin only in this design
     private void activeGameStatus(DTOGameData game,DTOTeam currentTeam, boolean isVisibile){
         if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            printBoard(game.getCards(),game.getRows(),game.getCols(),isVisibile);
+            //printBoard(game.getCards(),game.getRows(),game.getCols(),isVisibile);
             game.getDtoTeams().forEach(t -> {
                 printTeamScore(t);
                 System.out.println("Number of turns played: " + t.getNumTurnsPlayed());

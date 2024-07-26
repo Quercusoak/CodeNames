@@ -20,6 +20,8 @@ public class GameLogic implements Engine, Serializable {
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n\\t\\r]";
     private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]";
+    private final static Integer QUIT_TURN = 0;
+
 
     @Override
     public GameData readGameFile(String XMLpath) {
@@ -73,34 +75,48 @@ public class GameLogic implements Engine, Serializable {
     }
 
     private DTOGameData getDTOGameDataFromGame(GameData game) {
-        List<DTOCard> cards = new ArrayList<>();
+        /*List<DTOCard> cards = new ArrayList<>();
         if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            game.getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
+            game.getActiveGame().getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
                     card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
                     card.isBlack(), card.getCardNumber(), card.isFound())));
-        }
+        }*/
 
         List<DTOTeam> teams = new ArrayList<>();
         game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
 
         return new DTOGameData(game.getGameName(), game.getGameStatus(), game.getDictionaryFileName(), game.getDictionaryWords().size(),
-                game.getCardsCount(), game.getBlackCardsCount(), game.getRows(), game.getColumns(), teams, cards);
+                game.getCardsCount(), game.getBlackCardsCount(), game.getRows(), game.getColumns(), teams);
+    }
+
+    public DTOActiveGame getActiveGameFromGame(GameSession game) {
+        List<DTOCard> cards = new ArrayList<>();
+        game.getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
+                card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
+                card.isBlack(), card.getCardNumber(), card.isFound())));
+
+        List<DTOTeam> teams = new ArrayList<>();
+        game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
+
+        return new DTOActiveGame(game.getRows(), game.getColumns(), teams, cards);
     }
 
     public void startGame(GameData game){
 
         game.setGameStatus(GameStatus.ACTIVE);
 
+        game.setActiveGame(new GameSession(game.getRows(), game.getColumns(), game.getTeams()));
+
         /*Generate cards for game session*/
         generateCards(game);
 
         /*Put cards in board*/
-        int i=0;
+        /*int i=0;
         for (GameCard card : game.getCards()){
             card.setCardNumber(i+1);
             game.getBoard()[i / game.getColumns()][i % game.getColumns()]=card;
             i++;
-        }
+        }*/
     }
 
     private void generateCards(GameData game){
@@ -119,14 +135,14 @@ public class GameLogic implements Engine, Serializable {
         List<String> currGameCards = partitioned.get(true);
         List<String> currGameBlackCards = partitioned.get(false);
 
-        currGameBlackCards.forEach(a->game.addCard(a,isBlack));
+        currGameBlackCards.forEach(a->game.getActiveGame().addCard(a,isBlack));
 
         /*Assign to teams and create cards*/
         int count=0;
         for (Team team : game.getTeams()){
             IntStream.range(count,team.getNumberOfCards() + count)
                     .mapToObj(currGameCards::get)
-                    .forEach(a->game.addCard(a,team,!isBlack));
+                    .forEach(a->game.getActiveGame().addCard(a,team,!isBlack));
 
             count=count+team.getNumberOfCards();
         }
@@ -134,10 +150,10 @@ public class GameLogic implements Engine, Serializable {
         /*Rest of words are neutral*/
         IntStream.range(count,game.getCardsCount())
                 .mapToObj(currGameCards::get)
-                .forEach(a->game.addCard(a,!isBlack));
+                .forEach(a->game.getActiveGame().addCard(a,!isBlack));
     }
 
-    public DTOBoard getGameBoard(GameData game){
+    public DTOBoard getGameBoard(GameSession game){
         if (game==null){
             throw new GameInactiveException();
         }
@@ -156,18 +172,23 @@ public class GameLogic implements Engine, Serializable {
         return new DTOBoard(cards, game.getRows(), game.getColumns());
     }
 
-    public DTOTeam getCurrentTeam(GameData game){
+    public Team getCurrentTeam(GameSession game){
         if (game==null){
             throw new GameInactiveException();
         }
 
-        return getDTOTeamFromTeam(game.getPlayingTeam());
+        return game.getPlayingTeam();
     }
 
     @Override
-    public TurnStatus playTurn(Integer cardNum,GameData game) {
+    public TurnStatus playTurn(int cardNum,GameSession game) {
         if (game==null){
             throw new GameInactiveException();
+        }
+
+        //team chose to stop guessing
+        if (cardNum == QUIT_TURN){
+            return new TurnStatus(TurnGuessStatus.TEAMSKIPPED,getDTOTeamFromTeam(game.getPlayingTeam()));
         }
 
         if (cardNum>game.getCards().size() || cardNum<0) {
@@ -212,7 +233,7 @@ public class GameLogic implements Engine, Serializable {
     }
 
     @Override
-    public void turnEnd(GameData game) {
+    public void turnEnd(GameSession game) {
         /*Increment teams turn count*/
         game.getPlayingTeam().incTurnCounter();
         /*Increment current team to next:*/

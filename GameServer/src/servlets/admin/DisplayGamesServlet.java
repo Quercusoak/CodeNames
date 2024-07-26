@@ -26,14 +26,13 @@ public class DisplayGamesServlet extends HttpServlet{
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
             response.setContentType("text/plain;charset=UTF-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Only one admin session allowed at a time.");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED,"Only one admin session allowed at a time.");
             return;
         }
 
         response.setContentType("application/json");
         try (PrintWriter out = response.getWriter()) {
-            List<GameData> gamesList = gameManager.getGameDataList();
+            List<GameData> gamesList = gameManager.getGameList();
             Gson gson = new Gson();
             String json = gson.toJson(gamesList);
             out.println(json);

@@ -43,7 +43,7 @@ public class JoinGameServlet extends HttpServlet {
         String username = SessionManger.getUsername(request);
 
         if (username == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
             String gameName = request.getParameter("gameName");
             String teamName = request.getParameter("teamName");
@@ -54,8 +54,7 @@ public class JoinGameServlet extends HttpServlet {
             }
             else{
                 response.setContentType("text/plain;charset=UTF-8");
-                response.getWriter().write("Can't join selected game.");
-                response.setStatus(HttpServletResponse.SC_CONFLICT);
+                response.sendError(HttpServletResponse.SC_CONFLICT,"Can't join selected game.");
             }
         }
     }

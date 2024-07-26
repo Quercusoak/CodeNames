@@ -1,12 +1,15 @@
 package servlets.player;
 
 import com.google.gson.Gson;
+import dto.DTOActiveGame;
 import engine.GameData;
+import engine.GameManager;
+import engine.GameSession;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import engine.GameManager;
 import managers.SessionManger;
 import managers.Utils;
 
@@ -14,23 +17,24 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-@WebServlet(name = "Display Games Player", urlPatterns = "/gamesList")
-public class DisplayGamesPlayerServlet extends HttpServlet {
+@WebServlet("/status")
+public class GameStatusServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         GameManager gameManager = Utils.getServerManager(getServletContext());
         String username = SessionManger.getUsername(request);
 
         if (username == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
             response.setContentType("application/json");
             try (PrintWriter out = response.getWriter()) {
-                List<GameData> gamesList = gameManager.getGameList();
+                GameSession game = gameManager.getPlayerGame(username).getActiveGame();
+                DTOActiveGame activeGame = gameManager.getActiveGameStatus(game);
                 Gson gson = new Gson();
-                String json = gson.toJson(gamesList);
+                String json = gson.toJson(activeGame);
                 out.println(json);
                 out.flush();
             }
