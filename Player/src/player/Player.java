@@ -34,27 +34,28 @@ public class Player /*implements GameEndListener*/{
                 }
             }).build();
 
+    private String playerName;
+
     public Player(){
         login();
     }
 
     private void login(){
 
-        String userName;
         boolean validName = false;
         do {
             System.out.println("Please enter name:");
-            userName = scanner.nextLine();
+            playerName = scanner.nextLine();
 
-            if (userName.isEmpty()) {
+            if (playerName.isEmpty()) {
                 System.out.println("Name cannot be empty.");
             }
-            else if (registerUserName(userName)) {
+            else if (registerUserName(playerName)) {
                 validName = true;
             }
         }while(!validName);
 
-        System.out.println("Welcome " + userName);
+        System.out.println("Welcome " + playerName);
         menu();
     }
 
@@ -135,11 +136,10 @@ public class Player /*implements GameEndListener*/{
         }
         else {
             gameList.forEach(game -> {
-                System.out.print("\n"+gameList.indexOf(game)+1 +") ");
+                System.out.print("\n"+(gameList.indexOf(game)+1) +") ");
                 printGameInfo(game);
                 printTeamsInfo(game.getDtoTeams());
             });
-            //ClientUtils.printAllGames(gamesList);
         }
 
 /*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
@@ -201,7 +201,8 @@ public class Player /*implements GameEndListener*/{
     /*Sync teams and roles to catch first*/
     private void selectGameToRegister(List<DTOGameData> gameList) throws IOException {
         gameList.forEach(game -> {
-            System.out.println("\n"+gameList.indexOf(game)+1 +") "+game.getGameName());
+            System.out.println("\n"+(gameList.indexOf(game)+1) +") Game: "+game.getGameName());
+            System.out.println("Teams:");
             printTeamsInfo(game.getDtoTeams());
         });
 
@@ -286,8 +287,13 @@ public class Player /*implements GameEndListener*/{
                 .post(body)
                 .build();
 
-        executeRequest(request);
-        GamePlay activeGamePlay = new GamePlay(/*this,*/ game.getNumCards()+ game.getNumBlackCards(),team,role, HTTP_CLIENT);
+        try {
+            executeRequest(request);
+            GamePlay activeGamePlay = new GamePlay(/*this,*/ game.getNumCards()+ game.getNumBlackCards(),team,role, HTTP_CLIENT, playerName);
+        }catch (IOException e){
+            System.out.println(e.getMessage());
+        }
+
         //gamePlay(game.getGameName(),role);
 
 /*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {

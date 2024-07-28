@@ -53,10 +53,10 @@ public class DTOGameData {
 //    }
 
 
-    public DTOGameData(String name, /*GameStatus status,*/ String dictionaryFileName, int numDictionaryWords, int numCards,int numBlackCards,
+    public DTOGameData(String name, GameStatus status, String dictionaryFileName, int numDictionaryWords, int numCards,int numBlackCards,
                        int rows, int cols ,List<DTOTeam> teams/*, List<DTOCard> cards*/){
         gameName = name;
-//        gameStatus = status;
+        gameStatus = status;
         this.dictionaryFileName = dictionaryFileName;
         this.numDictionaryWords = numDictionaryWords;
         this.numCards = numCards;

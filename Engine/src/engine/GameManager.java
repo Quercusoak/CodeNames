@@ -92,166 +92,167 @@ public class GameManager {
 
     }
 
-    public TurnStatus singleTurn(Player player, int cardNum ,String definition) {
+    public TurnInfo singleTurn(Player player, int cardNum ,String definition) {
 
-        if (player.getGame().getGameStatus().equals(GameStatus.ACTIVE)) {
-
-            GameSession game = player.getGame().getGameSession();
-
-            if (player.isPlayerTurn()) {
-                TurnStatus guessOutcome = null;
-
-                switch (game.getCurrentRole()) {
-                    case DEFINER:
-                        game.setDefinition(definition);
-                        game.setNumCardsToGuess(cardNum);
-                        game.setCurrentRole(Role.GUESSER);
-                        break;
-                    case GUESSER:
-
-                        if (cardNum == QUIT_TURN) {
-                            gameLogic.turnEnd(game);
-                            throw new RuntimeException(TURN_SKIPPED);
-                        }
-
-                        try {
-                            guessOutcome = gameLogic.playTurn(cardNum - 1, game); //-1 for board indexes
-
-                            /*Check if team out of the game: by victory or black card.*/
-                            if (guessOutcome.getStatus().equals(TurnGuessStatus.BLACK) || guessOutcome.getStatus().getVictory()) {
-                                /*Team tmp = game.getPlayingTeam();
-                                game.nextTeam();
-                                game.getTeams().remove(tmp);*/ //team removed from active game session
-
-                                String teamName = guessOutcome.getTeamWhoseCardItWas().getName();
-                                Team team =game.getTeams().stream().filter(t->t.getName().equals(teamName)).findFirst().get();
-                                String reasonGameOver = "placeholder";
-
-                                switch (guessOutcome.getStatus()){
-                                    case BLACK:
-                                        reasonGameOver = "Black card- team lost.";
-                                        break;
-                                    case VICTORYCURRENTTEAM:
-                                        reasonGameOver =  "Your team found all words and won!";
-                                        break;
-                                    case VICTORYOTHERTEAM:
-                                        reasonGameOver =  "Team "+team.getName()+" found all words and won!";
-                                        break;
-                                }
-
-                                team.setTeamOUtOfGame(reasonGameOver);
-
-                                //something here doesnt add up
-                                if (game.getTeams().stream().filter(Team::isTeamPlaying).count() == 1){
-                                    reasonGameOver = "Last team left - automatic lose";
-
-                                }
-                                
-
-                                guessOutcome.setGameOver(reasonGameOver);
-
-                                game.setCurrentRole(Role.DEFINER);
-                            }
-                            game.decrementNumCardsToGuess();
-
-                            if (game.getNumCardsToGuess() == 0) {
-                                game.setCurrentRole(Role.DEFINER);
-                                gameLogic.turnEnd(game);
-                            }
-
-                        } catch (CardAlreadyGuessed e) {
-                            throw new RuntimeException("The word: " + e.getWord() + " was already guessed.");
-                        } catch (CardSelectionOutOfBound e) {
-                            throw new RuntimeException(e.getMessage());
-                        }
-                        break;
-                }
-
-                return guessOutcome;
-
-            } else {
-                throw new RuntimeException(NOT_PLAYER_TURN+"\nCurrently turn of team "+game.getPlayingTeam().getName()+", role: "+game.getCurrentRole());
-            }
-        } else {
+        if (!player.getGame().getGameStatus().equals(GameStatus.ACTIVE)) {
             throw new RuntimeException(GAME_INACTIVE);
         }
-    }
 
-    /*public TurnStatus playTurn(int cardGuess, GameSession game) {
-   *//*     int QUIT_TURN = 0;
-        boolean isTeamPlaying = true;
-        TurnStatus guessOutcome = null;
+        GameSession game = player.getGame().getGameSession();
+        TurnInfo turnOutcome = null;
 
-
-        try {
-            guessOutcome = gameLogic.playTurn(cardGuess - 1, game); //-1 for board indexes
-            //printTeamScore(engine.getCurrentTeam());
-
-            //Check if game ended: by victory or black card.
-            if (guessOutcome.getStatus().equals(TurnGuessStatus.BLACK) || guessOutcome.getStatus().getVictory()) {
-                game.getPlayingTeam().setTeamOUtOfGame();
-                isTeamPlaying = false;
-            }
-            //numCargdsToGuess--;
-            //printTurnStauts(guessOutcome);
-        } catch (CardAlreadyGuessed e) {
-            System.out.println("The word: " + e.getWord() + " was already guessed.");
-        } catch (CardSelectionOutOfBound e) {
-            System.out.println(e.getMessage());
+        if (!player.isPlayerTurn()) {
+            throw new RuntimeException(NOT_PLAYER_TURN + "\nCurrently turn of team " + game.getPlayingTeam().getName() + ", role: " + game.getCurrentRole());
         }
 
-        return guessOutcome;*//*
+        DTOBoard board = gameLogic.getGameBoard(game); //Get updated board
 
-        return gameLogic.playTurn(cardGuess, game);
-    }
+        switch (game.getCurrentRole()) {
+            case DEFINER:
+                game.setDefinition(definition);
+                game.setNumCardsToGuess(cardNum);
+                game.setCurrentRole(Role.GUESSER);
+                turnOutcome = new TurnInfo(board);
+                break;
+            case GUESSER:
 
-    public void turnEnd(GameSession game) {
-        gameLogic.turnEnd(game);
-    }*/
+                if (cardNum == QUIT_TURN) {
+                    gameLogic.turnEnd(game);
+                    throw new RuntimeException(TURN_SKIPPED);
+                }
 
-    public DTOBoard getBoard(GameSession game) {
-        return gameLogic.getGameBoard(game);
+                try {
+                    TurnStatus guessOutcome = gameLogic.playTurn(cardNum - 1, game); //-1 for board indexes
+                    String reasonGameOver = null;
+
+                    if (guessOutcome.getStatus().equals(TurnGuessStatus.BLACK) || guessOutcome.getStatus().getVictory()) { //Check if team out of the game: by victory or black card.
+                        String teamName = guessOutcome.getTeamWhoseCardItWas().getName();
+                        Team team = game.getTeams().stream().filter(t -> t.getName().equals(teamName)).findFirst().get();
+
+                        switch (guessOutcome.getStatus()) {
+                            case BLACK:
+                                reasonGameOver = "Black card- team lost.";
+                                break;
+                            case VICTORYCURRENTTEAM:
+                                reasonGameOver = "Your team found all words and won!";
+                                break;
+                            case VICTORYOTHERTEAM:
+                                reasonGameOver = "Team " + team.getName() + " found all words and won!";
+                                break;
+                        }
+
+                        team.setTeamOUtOfGame(reasonGameOver); //team removed from active game session, notifies player of reason
+
+                        //check if game over - when only one team is left then notify the players of the remaining team that they lost, and remove them from game
+                        if (game.getTeams().stream().filter(Team::isTeamPlaying).count() == 1) {
+
+                            game.getTeams().stream()
+                                    .filter(Team::isTeamPlaying)
+                                    .forEach(t ->
+                                            t.getPlayers().forEach(p -> {
+                                                p.setGameOver("Last team left - automatic lose");
+                                                p.removeGame();
+                                            }));
+
+                            player.getGame().gameEnded();// Clear the game session
+
+                        } else {
+                            game.setCurrentRole(Role.DEFINER);
+                        }
+
+                    } else {
+                        game.decrementNumCardsToGuess();
+
+                        if (game.getNumCardsToGuess() == 0) {
+                            game.setCurrentRole(Role.DEFINER);
+                            gameLogic.turnEnd(game);
+                        }
+                    }
+
+                    turnOutcome = new TurnInfo(board, guessOutcome, reasonGameOver);
+
+                } catch (CardAlreadyGuessed e) {
+                    throw new RuntimeException("The word: " + e.getWord() + " was already guessed.");
+                } catch (CardSelectionOutOfBound e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+                break;
+        }
+        return turnOutcome;
     }
 
     public TurnInfo getTurnInfo(Player player) {
 
+        if (player.isGameOver()) {
+            return new TurnInfo(player.getReasonGameOver());
+        }
+
         GameSession game = player.getGame().getGameSession();
 
-        if (player.getGame().getGameStatus().equals(GameStatus.ACTIVE)) {
-
-            if (player.isPlayerTurn()) {
-                TurnInfo turnInfo = null;
-                DTOBoard board = gameLogic.getGameBoard(game);
-
-                switch (game.getCurrentRole()) {
-                    case DEFINER:
-                        turnInfo = new TurnInfo(board);
-                        break;
-                    case GUESSER:
-                        turnInfo = new TurnInfo(game.getDefinition(), game.getNumCardsToGuess(), board);
-                        break;
-                }
-                return turnInfo;
-            }else {
-                throw new RuntimeException(NOT_PLAYER_TURN+"\nCurrently turn of team "+game.getPlayingTeam().getName()+", role: "+game.getCurrentRole());
-            }
-        } else {
+        if (!player.getGame().getGameStatus().equals(GameStatus.ACTIVE)) {
             throw new RuntimeException(GAME_INACTIVE);
         }
+
+        if (!player.isPlayerTurn()) {
+            throw new RuntimeException(NOT_PLAYER_TURN + "\nCurrently turn of team " + game.getPlayingTeam().getName() + ", role: " + game.getCurrentRole());
+        }
+
+        DTOBoard board = gameLogic.getGameBoard(game);
+
+        return game.getCurrentRole().equals(Role.DEFINER)? new TurnInfo(board) : new TurnInfo(game.getDefinition(), game.getNumCardsToGuess(), board);
+
+        /*if (!player.isGameOver()) {
+            GameSession game = player.getGame().getGameSession();
+
+            if (player.getGame().getGameStatus().equals(GameStatus.ACTIVE)) {
+
+                if (player.isPlayerTurn()) {
+                    TurnInfo turnInfo = null;
+                    DTOBoard board = gameLogic.getGameBoard(game);
+
+                    switch (game.getCurrentRole()) {
+                        case DEFINER:
+                            turnInfo = new TurnInfo(board);
+                            break;
+                        case GUESSER:
+                            turnInfo = new TurnInfo(game.getDefinition(), game.getNumCardsToGuess(), board);
+                            break;
+                    }
+                    return turnInfo;
+                } else {
+                    throw new RuntimeException(NOT_PLAYER_TURN + "\nCurrently turn of team " + game.getPlayingTeam().getName() + ", role: " + game.getCurrentRole());
+                }
+            } else {
+                throw new RuntimeException(GAME_INACTIVE);
+            }
+        }else{
+            return new TurnInfo(player.getReasonGameOver());
+        }*/
     }
 
     public DTOActiveGame getActiveGame(String playerName) {
-        GameData game = playerSet.get(playerName).getGame();
-        return game==null? null: gameLogic.getActiveGameFromGame(game.getGameSession());
+        Player player =playerSet.get(playerName);
+        if (player.isGameOver()){
+            throw new RuntimeException(player.getReasonGameOver());
+        }else{
+            return gameLogic.getActiveGameFromGame(player.getGame().getGameSession());
+        }
+
+        /*GameData game = playerSet.get(playerName).getGame();
+        return game==null? null: gameLogic.getActiveGameFromGame(game.getGameSession());*/
     }
 
 
-    public boolean isThereOneTeamLeft(GameSession game) {
-        return game.getTeams().size() == 1;
-    }
-
-    public DTOActiveGame getActiveGameStatus(GameSession game) {
-        return gameLogic.getActiveGameFromGame(game);
+    public DTOActiveGame getActiveGameStatus(String gameName) {
+        GameData game = gameList.stream()
+                .filter(g->g.getGameName().equals(gameName))
+                .findFirst()
+                .get();
+        if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
+            return gameLogic.getActiveGameFromGame(game.getGameSession());
+        }else{
+            throw new RuntimeException(GAME_INACTIVE);
+        }
     }
 
     /*public Team getCurrentTeam(GameData game) {

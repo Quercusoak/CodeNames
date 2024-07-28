@@ -17,32 +17,35 @@ public class GamePlay {
     private final static String GET_DEFINER_CARDS_NUM = "Input overall number of cards that fit the definition: ";
     private final static Integer QUIT_TURN = 0;
     private final static String GET_PLAYERS_CARD_GUESS = "Input card number, or press "+QUIT_TURN+" to end turn: ";
-    private final static String MAIN_MENU = "\nChoose action:";
+    private final static String MAIN_MENU = "Choose action:";
     private static String SELECTION_OUT_OF_BOUNDS(int maxCardsNum) {return "Number out of board's bound. Select number between 1 and "+maxCardsNum;}
     private final static String EXIT_MESSAGE = "Thanks for playing! Goodbye!";
     private final static String GAME_INACTIVE = "Game inactive.";
 
 //    private final GameEndListener listener;
+    private final String playerName;
     private final DTOTeam team;
     private final Role role;
     private final OkHttpClient HTTP_CLIENT;
     private final int numCardsOnBoard;
     private boolean gameEnded = false;
 
-    public GamePlay(/*GameEndListener listener,*/ int numCardsOnBoard, DTOTeam team, Role role, OkHttpClient HTTP_CLIENT){
+    public GamePlay(/*GameEndListener listener,*/ int numCardsOnBoard, DTOTeam team, Role role, OkHttpClient HTTP_CLIENT, String playerName ){
 //        this.listener = listener;
         this.team = team;
         this.role = role;
         this.HTTP_CLIENT = HTTP_CLIENT;
         this.numCardsOnBoard = numCardsOnBoard;
+        this.playerName = playerName;
         gamePlay();
     }
 
     private void gamePlay() {
 
-        System.out.println("Welcome to the game!");
+        System.out.println("\nWelcome to the game!");
 
         while (!gameEnded) {
+            System.out.println("\n"+role.toString()+" of team "+team.getName()+", "+playerName);
             System.out.println(MAIN_MENU);
             Arrays.stream(GameMenuOptions.values()).forEach(c -> System.out.println((c.ordinal() + 1) + ") " + c));
             try {
@@ -55,12 +58,11 @@ public class GamePlay {
                         break;
                 }
             } catch (RuntimeException | IOException e) {
-                System.out.println(e.getMessage());
+                System.out.println("\n"+e.getMessage());
             }
         }
 
         System.out.println(EXIT_MESSAGE);
-//        listener.onGameEnd();
     }
 
     private void displayGameStatus() throws IOException {
@@ -72,21 +74,13 @@ public class GamePlay {
 
         String jsonData = executeRequest(request);
 
-        DTOGameOver dtoGameOver = GSON_INSTANCE.fromJson(jsonData, DTOGameOver.class);
-
-        if (dtoGameOver.isGameOver()) {
-            System.out.println(dtoGameOver.getReasonGameOver());
-            gameEnded = true;
-            return;
-        }
-
         DTOActiveGame game =  GSON_INSTANCE.fromJson(jsonData, DTOActiveGame.class);
 
         System.out.println("\nGame Status: " + game.getGameStatus());
+        ClientUtils.printTeamScore(game.getPlayingTeam());
+        System.out.println("Next turn: " + game.nextTeam().getName());
 
         if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            ClientUtils.printTeamScore(game.getPlayingTeam());
-            System.out.println("Next turn: " + game.nextTeam().getName());
             ClientUtils.printBoard(game.getBoard(),role.equals(Role.DEFINER));
         }
     }
@@ -99,19 +93,7 @@ public class GamePlay {
 
         String jsonData = executeRequest(request);
 
-        DTOGameOver dtoGameOver = GSON_INSTANCE.fromJson(jsonData, DTOGameOver.class);
-        if (dtoGameOver.isGameOver()) {
-            System.out.println(dtoGameOver.getReasonGameOver());
-            gameEnded = true;
-            return;
-        }
-
         TurnInfo turnInfo = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class); //Get turn info if game active- otherwise catches error in menu that game pending
-
-        if (turnInfo == null) {
-            System.out.println(GAME_INACTIVE);
-            return;
-        }
 
         //Got current game board, print it:
         printBoard(turnInfo.getBoard(),role.equals(Role.DEFINER));
@@ -144,6 +126,52 @@ public class GamePlay {
                 .build();
 
         executeRequest(request);
+        System.out.println("Team "+team.getName()+" starting to guess words in definition "+definition+".");
+    }
+
+    private void playTurnGuesser() throws IOException {
+
+        int cardGuess = getNumCardsToGuess(numCardsOnBoard, GET_PLAYERS_CARD_GUESS, false);
+
+        RequestBody body = new FormBody.Builder()
+                .add("cardNum", String.valueOf(cardGuess))
+                .build();
+
+        Request request = new Request.Builder()
+                .url(PLAY_TURN)
+                .post(body)
+                .build();
+
+        String jsonData = executeRequest(request);
+        TurnInfo guessOutcome = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class);
+
+        printTurnStauts(guessOutcome.getTurnStatus());
+        printBoard(guessOutcome.getBoard(),false);
+    }
+
+    private String executeRequest(Request request) throws IOException {
+        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+
+            if (!response.isSuccessful()) {
+                throw new IOException(response.body().string());
+            } else {
+                /*return response.body().string();*/
+                String jsonData = response.body().string();
+
+                try {
+                    TurnInfo turnInfo = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class);
+
+                    if (turnInfo.getReasonGameOver() != null) {
+                        gameEnded = true;
+                        throw new RuntimeException(turnInfo.getReasonGameOver());
+                    }else {
+                        return jsonData;
+                    }
+                }catch (IllegalStateException e){
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
+        }
     }
 
     private int getNumCardsToGuess(int maxCardsNum, String msg,boolean isDefiner){
@@ -171,32 +199,6 @@ public class GamePlay {
         return numCargdsToGuess;
     }
 
-    private void playTurnGuesser() throws IOException {
-
-        int cardGuess = getNumCardsToGuess(numCardsOnBoard, GET_PLAYERS_CARD_GUESS, false);
-
-        RequestBody body = new FormBody.Builder()
-                .add("cardNum", String.valueOf(cardGuess))
-                .build();
-
-        Request request = new Request.Builder()
-                .url(PLAY_TURN)
-                .post(body)
-                .build();
-
-        String jsonData = executeRequest(request);
-        TurnStatus guessOutcome = GSON_INSTANCE.fromJson(jsonData, TurnStatus.class);
-
-        if (guessOutcome.isGameOver()){
-            gameEnded = true;
-            System.out.println("Last team in the game- you lost.");
-            return;
-        }
-
-        printTurnStauts(guessOutcome);
-
-    }
-
     private void printTurnStauts(TurnStatus g) {
         System.out.println(g.getStatus().toString());
 
@@ -215,17 +217,6 @@ public class GamePlay {
                 System.out.println("Team "+g.getTeamWhoseCardItWas().getName()+", you have won!");
                 gameEnded = true;
                 break;
-        }
-    }
-
-    private String executeRequest(Request request) throws IOException {
-        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException(response.body().string());
-            }
-            else {
-                return response.body().string();
-            }
         }
     }
 }

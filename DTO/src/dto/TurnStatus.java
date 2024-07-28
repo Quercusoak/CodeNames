@@ -4,14 +4,12 @@ package dto;
 public class TurnStatus {
     private final TurnGuessStatus status;
     private final DTOTeam teamWhoseCardItWas;
-    private final String msg;
-    private boolean gameOver;
+    private final String guessOutcomeMsg;
 
     public TurnStatus(TurnGuessStatus s,DTOTeam t){
         status = s;
         teamWhoseCardItWas = t;
-        msg = s.toString() + ((t!=null)? (t.getName() + (s.getVictory()? " Score: "+t.getScore() :"")): "");
-        gameOver = false;
+        guessOutcomeMsg = s.toString() + ((t!=null)? (t.getName() + (s.getVictory()? " Score: "+t.getScore() :"")): "");
     }
 
     public DTOTeam getTeamWhoseCardItWas() {
@@ -22,20 +20,8 @@ public class TurnStatus {
         return status;
     }
 
-    public String getMsg(){
-        return msg;
+    public String getGuessOutcomeMsg(){
+        return guessOutcomeMsg;
     }
 
-    public boolean isGameOver() {
-        return gameOver;
-    }
-
-    private String reasonGameOver;
-
-    public String getReasonGameOver() { return reasonGameOver; }
-
-    public void setGameOver(String reason) {
-        this.gameOver = true;
-        this.reasonGameOver = reason;
-    }
 }

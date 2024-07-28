@@ -172,20 +172,20 @@ public class Admin {
                         .filter(t -> t.getNumRegisteredDefiners()==t.getNumRequiredDefiners() && t.getNumRegisteredGuessers()==t.getNumRequiredGuessers())
                         .count();
                 int numTeams = game.getDtoTeams().size();
-                System.out.println(", number of active teams: "+numActiveTeams+ "/"+numTeams);
+                System.out.println(", active teams: "+numActiveTeams+ "/"+numTeams);
             });
 
             /*Get admin's selection and display the selcted game:*/
             DTOGameData game = gamesList.get(getUserSelection(gamesList.size() , false));
-            joinGame(game);
+            joinGame(game.getGameName());
         }
     }
 
-    private void joinGame(DTOGameData gameData) throws IOException {
+    private void joinGame(String gameName) throws IOException {
         String url = HttpUrl
                 .parse(Constants.OBSERVE_GAME)
                 .newBuilder()
-                .addQueryParameter("gameName", gameData.getGameName())
+                .addQueryParameter("gameName", gameName)
                 .build()
                 .toString();
 
@@ -194,11 +194,7 @@ public class Admin {
                 .get()
                 .build();
 
-
-        String jsonData = executeRequest(request);
-        DTOActiveGame game = gson.fromJson(jsonData, DTOActiveGame.class);
-
-        dynamicGameStatus(game);
+        dynamicGameStatus(request);
         int optionSelected;
 
         do {
@@ -206,21 +202,18 @@ public class Admin {
             System.out.println("1) View dynamic game status\n2) Return to main menu");
             optionSelected = getUserSelection(2,false) + 1;
             if (optionSelected == 1) {
-                dynamicGameStatus(game);
+                dynamicGameStatus(request);
             }
         } while(optionSelected != 2);
     }
 
-    private void dynamicGameStatus(DTOActiveGame game){
+    private void dynamicGameStatus(Request request) throws IOException {
 
-        if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            printBoard(game.getBoard(),true);
-            game.getTeams().forEach(ClientUtils::printTeamScore);
-            System.out.println("Next turn: " + game.nextTeam().getName());
-        }
-        else{
-            System.out.println("Game inactive.");
-        }
+        String jsonData = executeRequest(request);
+        DTOActiveGame game = gson.fromJson(jsonData, DTOActiveGame.class);
+        printBoard(game.getBoard(), true);
+        game.getTeams().forEach(ClientUtils::printTeamScore);
+        System.out.println("Next turn: " + game.nextTeam().getName());
     }
 
     private String executeRequest(Request request) throws IOException{

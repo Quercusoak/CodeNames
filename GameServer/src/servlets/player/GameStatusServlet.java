@@ -30,14 +30,18 @@ public class GameStatusServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
             response.setContentType("application/json");
-            try (PrintWriter out = response.getWriter()) {
-//                GameSession game = gameManager.getPlayerGame(username).getActiveGame();
-//                DTOActiveGame activeGame = gameManager.getActiveGameStatus(game);
+
+            try{
                 DTOActiveGame activeGame = gameManager.getActiveGame(username);
-                Gson gson = new Gson();
-                String json = gson.toJson(activeGame);
-                out.println(json);
-                out.flush();
+                try (PrintWriter out = response.getWriter()) {
+                    Gson gson = new Gson();
+                    String json = gson.toJson(activeGame);
+                    out.println(json);
+                    out.flush();
+                }
+            }catch (RuntimeException e){
+                response.setStatus(HttpServletResponse.SC_CONFLICT);
+                response.getWriter().println(e.getMessage());
             }
         }
     }

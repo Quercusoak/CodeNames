@@ -10,9 +10,16 @@ public class GameData implements Serializable {
     private final String gameName;
     public String getGameName() {return gameName;}
 
-    private final GameStatus gameStatus;
+    private GameStatus gameStatus;
     public GameStatus getGameStatus() {return gameSession.getGameStatus();}
-//    public void setGameStatus(GameStatus gameStatus) {this.gameStatus = gameStatus;}
+    public void newActiveGameSession() {
+        this.gameStatus = GameStatus.ACTIVE;
+        this.gameSession.setGameStatus(GameStatus.ACTIVE);
+    }
+    public void gameEnded(){
+        this.gameStatus = GameStatus.PENDING;
+        gameSession.clearSession();
+    }
 
     private final String dictionaryFileName;
     public String getDictionaryFileName() {return dictionaryFileName;}

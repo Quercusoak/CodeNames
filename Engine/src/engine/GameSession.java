@@ -3,7 +3,6 @@ package engine;
 import dto.GameStatus;
 import dto.Role;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -90,9 +89,10 @@ public class GameSession {
         this.currentRole = currentRole;
     }
 
-    public void initNewGame(){
+    public void clearSession(){
         cardsInGame.clear();
         currTeamIndex = 0;
         teams.forEach(Team::clearTeam);
+        gameStatus = GameStatus.PENDING;
     }
 }

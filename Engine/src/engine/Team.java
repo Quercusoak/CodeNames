@@ -5,6 +5,7 @@ import dto.Role;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class Team implements Serializable {
     public Team(String name, int numCards, int definers, int guessers){
@@ -104,7 +105,10 @@ public class Team implements Serializable {
 
     public void setTeamOUtOfGame(String reasonGameOver){
         isTeamPlaying=false;
-        players.keySet().forEach(p-> p.setGameOver(reasonGameOver));
+        players.keySet().forEach(p-> {
+            p.setGameOver(reasonGameOver);
+            p.removeGame();
+        });
     }
 
     public boolean isTeamPlaying(){return isTeamPlaying;}
@@ -115,5 +119,9 @@ public class Team implements Serializable {
         numRegisteredGuessers = 0;
         score =0;
         numTurnsPlayed = 0;
+    }
+
+    public Set<Player> getPlayers(){
+        return players.keySet();
     }
 }

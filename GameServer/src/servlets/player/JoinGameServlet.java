@@ -54,7 +54,8 @@ public class JoinGameServlet extends HttpServlet {
             }
             else{
                 response.setContentType("text/plain;charset=UTF-8");
-                response.sendError(HttpServletResponse.SC_CONFLICT,"Can't join selected game.");
+                response.setStatus(HttpServletResponse.SC_CONFLICT);
+                response.getWriter().println("Can't join: selected position taken.");
             }
         }
     }

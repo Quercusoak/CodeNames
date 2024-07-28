@@ -84,7 +84,7 @@ public class GameLogic implements Engine, Serializable {
         List<DTOTeam> teams = new ArrayList<>();
         game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
 
-        return new DTOGameData(game.getGameName(), /*game.getGameStatus(),*/ game.getDictionaryFileName(), game.getDictionaryWords().size(),
+        return new DTOGameData(game.getGameName(), game.getGameStatus(), game.getDictionaryFileName(), game.getDictionaryWords().size(),
                 game.getNumCards(), game.getNumBlackCards(), game.getRows(), game.getColumns(), teams);
     }
 
@@ -104,8 +104,7 @@ public class GameLogic implements Engine, Serializable {
 
     public void startGame(GameData game){
 
-        game.getGameSession().initNewGame();
-        game.getGameSession().setGameStatus(GameStatus.ACTIVE);
+        game.newActiveGameSession();
 
         /*Generate cards for game session*/
         generateCards(game);
@@ -312,10 +311,7 @@ public class GameLogic implements Engine, Serializable {
                  t.getNumRegisteredDefiners(), t.getNumRequiredGuessers(),t.getNumRegisteredGuessers());
     }
 
-    public DTOGameData displayGameParameters(GameData gameData){
-        if (gameData==null){
-            throw new NoFileLoadedException();
-        }
-        return getDTOGameDataFromGame(gameData);
+    public List<DTOGameData> displayGameParameters(List<GameData> gameDataList){
+        return gameDataList.stream().map(this::getDTOGameDataFromGame).collect(Collectors.toList());
     }
 }

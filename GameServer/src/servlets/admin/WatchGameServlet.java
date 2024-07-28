@@ -25,20 +25,27 @@ public class WatchGameServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
             response.setContentType("text/plain;charset=UTF-8");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED,"Only one admin session allowed at a time.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Only one admin session allowed at a time.");
             return;
         }
 
-        response.setContentType("application/json");
-        try (PrintWriter out = response.getWriter()) {
-            GameManager gameManager = Utils.getServerManager(getServletContext());
-            String gameName = request.getParameter("gameName");
-            GameData gameData = gameManager.getActiveGamesList().stream().filter(g->g.getGameName().equals(gameName)).findFirst().get();
-            DTOActiveGame game = gameManager.getActiveGameStatus(gameData.getGameSession());
-            Gson gson = new Gson();
-            String json = gson.toJson(game);
-            out.println(json);
-            out.flush();
+        GameManager gameManager = Utils.getServerManager(getServletContext());
+        String gameName = request.getParameter("gameName");
+
+        try{
+            response.setContentType("application/json");
+            DTOActiveGame game = gameManager.getActiveGameStatus(gameName);
+
+            try (PrintWriter out = response.getWriter()) {
+                Gson gson = new Gson();
+                String json = gson.toJson(game);
+                out.println(json);
+                out.flush();
+            }
+        }catch (RuntimeException e){
+            response.setStatus(HttpServletResponse.SC_CONFLICT);
+            response.getWriter().println(e.getMessage());
         }
     }
 }

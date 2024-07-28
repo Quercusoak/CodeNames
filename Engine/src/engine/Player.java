@@ -23,6 +23,7 @@ public class Player {
         this.team = team;
         this.role = role;
         isGameOver = false;
+        reasonGameOver=null;
     }
 
     public boolean isPlayerTurn(){
@@ -33,7 +34,6 @@ public class Player {
         this.game = null;
         this.team = null;
         this.role = null;
-        isGameOver = false;
     }
 
     private String reasonGameOver;

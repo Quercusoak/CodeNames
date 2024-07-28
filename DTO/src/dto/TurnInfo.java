@@ -3,45 +3,51 @@ package dto;
 public class TurnInfo {
 
     private final String definitionToGuess;
-    public String getDefinitionToGuess() {return definitionToGuess;}
-
     private final int numGuesses;
-    public int getNumGuesses() {return numGuesses;}
-
     private final DTOBoard board;
-    public DTOBoard getBoard() {return board;}
+    private final TurnStatus turnStatus;
+    private final String reasonGameOver;
 
+    public String getDefinitionToGuess() {return definitionToGuess;}
+    public int getNumGuesses() {return numGuesses;}
+    public DTOBoard getBoard() {return board;}
+    public TurnStatus getTurnStatus() {return turnStatus;}
+    public String getReasonGameOver() { return reasonGameOver; }
+
+    //For guesser at the start of the turn
     public TurnInfo(String definitionToGuess, int numGuesses, DTOBoard board) {
         this.definitionToGuess = definitionToGuess;
         this.numGuesses = numGuesses;
         this.board = board;
-        gameOver = false;
+        turnStatus = null;
+        reasonGameOver = null;
     }
 
+    //For definer to just get the board at start of turn
     public TurnInfo(DTOBoard board) {
-        this.definitionToGuess = "";
-        this.numGuesses = -1;
         this.board = board;
-        gameOver = false;
+        definitionToGuess = null;
+        numGuesses = -1;
+        turnStatus = null;
+        reasonGameOver = null;
     }
 
-    public TurnInfo(String reason) {
-        this.definitionToGuess = "";
-        this.numGuesses = -1;
-        this.board = null;
-        gameOver = true;
-        this.reasonGameOver = reason;
-
+    //For guesser to get turn outcome and relevant board
+    public TurnInfo(DTOBoard board, TurnStatus status, String reasonGameOver) {
+        this.board = board;
+        this.turnStatus = status;
+        this.reasonGameOver = reasonGameOver;
+        definitionToGuess = null;
+        numGuesses = -1;
     }
 
-    private final boolean gameOver;
-
-    public boolean isGameOver() {
-        return gameOver;
+    //For when player attempts to play after the game has ended
+    public TurnInfo(String reasonGameOver) {
+        this.reasonGameOver = reasonGameOver;
+        definitionToGuess = null;
+        numGuesses = -1;
+        board = null;
+        turnStatus = null;
     }
-
-    private String reasonGameOver;
-
-    public String getReasonGameOver() { return reasonGameOver; }
 
 }

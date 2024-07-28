@@ -26,7 +26,8 @@ public class DisplayGamesServlet extends HttpServlet{
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute(AdminSessionManager.ADMIN_SESSION_KEY))) {
             response.setContentType("text/plain;charset=UTF-8");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED,"Only one admin session allowed at a time.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Only one admin session allowed at a time.");
             return;
         }
 
