@@ -1,5 +1,8 @@
 package engine;
 
+import dto.GameStatus;
+import dto.Role;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,12 +12,12 @@ public class GameSession {
 
     public GameSession(int rows, int columns, List<Team> teams){
         board = new GameCard[rows][columns];
-        this.teams = new ArrayList<>();
-        teams.forEach(t->this.teams.add(new Team(t)));
+        this.teams = teams;
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;
         this.rows = rows;
-        this.cols = columns;
+        this.columns = columns;
+        gameStatus = GameStatus.PENDING;
     }
 
     private final List<Team> teams;
@@ -27,9 +30,9 @@ public class GameSession {
         return rows;
     }
 
-    private final int cols;
+    private final int columns;
     public int getColumns() {
-        return cols;
+        return columns;
     }
 
     private final GameCard[][] board;
@@ -37,7 +40,7 @@ public class GameSession {
         return board;
     }
 
-    private final Set<GameCard> cardsInGame;
+    private Set<GameCard> cardsInGame;
     public Set<GameCard> getCards() {
         return cardsInGame;
     }
@@ -56,12 +59,6 @@ public class GameSession {
         cardsInGame.add(new GameCard(word, isBlack));
     }
 
-    public void clearFinishedGame()
-    {
-        cardsInGame.clear();
-        currTeamIndex = 0;
-        teams.forEach(Team::clearTeam);
-    }
 
     public void nextTeam(){
         do {
@@ -69,7 +66,33 @@ public class GameSession {
         }while (!teams.get(currTeamIndex).isTeamPlaying());
     }
 
-    public void removeTeam(Team team){
-        teams.remove(team);
+    private GameStatus gameStatus;
+    public GameStatus getGameStatus() {return gameStatus;}
+    public void setGameStatus(GameStatus gameStatus) { this.gameStatus=gameStatus;}
+
+    private String definition;
+    private int numCardsToGuess;
+    private Role currentRole = Role.DEFINER;
+
+    public String getDefinition() {
+        return definition;
+    }
+    public void setDefinition(String definition) { this.definition = definition; }
+
+    public int getNumCardsToGuess() { return numCardsToGuess; }
+    public void setNumCardsToGuess(int numCardsToGuess) { this.numCardsToGuess = numCardsToGuess; }
+    public void decrementNumCardsToGuess(){ numCardsToGuess--;}
+
+    public Role getCurrentRole() {
+        return currentRole;
+    }
+    public void setCurrentRole(Role currentRole) {
+        this.currentRole = currentRole;
+    }
+
+    public void initNewGame(){
+        cardsInGame.clear();
+        currTeamIndex = 0;
+        teams.forEach(Team::clearTeam);
     }
 }

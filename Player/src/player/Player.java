@@ -6,15 +6,16 @@ import dto.DTOTeam;
 import dto.Role;
 import okhttp3.*;
 import util.ClientUtils;
-import com.google.gson.Gson;
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
 import static player.Constants.*;
+import static util.ClientUtils.printGameInfo;
+import static util.ClientUtils.printTeamsInfo;
 
-public class Player implements GameEndListener{
+public class Player /*implements GameEndListener*/{
 
     public final static OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder()
             .cookieJar(new CookieJar() {
@@ -127,12 +128,18 @@ public class Player implements GameEndListener{
         String jsonData = executeRequest(request);
         Type listType = new TypeToken<List<DTOGameData>>() {
         }.getType();
-        List<DTOGameData> gamesList = GSON_INSTANCE.fromJson(jsonData, listType);
+        List<DTOGameData> gameList = GSON_INSTANCE.fromJson(jsonData, listType);
 
-        if (gamesList.isEmpty()) {
+        if (gameList.isEmpty()) {
             System.out.println("No games found");
-        } else {
-            ClientUtils.printAllGames(gamesList);
+        }
+        else {
+            gameList.forEach(game -> {
+                System.out.print("\n"+gameList.indexOf(game)+1 +") ");
+                printGameInfo(game);
+                printTeamsInfo(game.getDtoTeams());
+            });
+            //ClientUtils.printAllGames(gamesList);
         }
 
 /*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
@@ -157,7 +164,7 @@ public class Player implements GameEndListener{
 
     private void joinGame() throws IOException {
         Request request = new Request.Builder()
-                .url(REGISTER_GAME)
+                .url(JOIN_GAME)
                 .get()
                 .build();
 
@@ -194,13 +201,14 @@ public class Player implements GameEndListener{
     /*Sync teams and roles to catch first*/
     private void selectGameToRegister(List<DTOGameData> gameList) throws IOException {
         gameList.forEach(game -> {
-            System.out.print(gameList.indexOf(game)+1 +") "+game.getGameName());
-            ClientUtils.printTeamsInfo(game.getDtoTeams());
+            System.out.println("\n"+gameList.indexOf(game)+1 +") "+game.getGameName());
+            printTeamsInfo(game.getDtoTeams());
         });
 
         int userSelection;
 
         //Select game
+        System.out.println();
         System.out.println(SELECT_GAME);
         userSelection = ClientUtils.getUserSelection(gameList.size(),true);
 
@@ -270,16 +278,16 @@ public class Player implements GameEndListener{
         RequestBody body = new FormBody.Builder()
                 .add("gameName", game.getGameName())
                 .add("teamName", team.getName())
-                .add("role", role.toString())
+                .add("role", role.name())
                 .build();
 
         Request request = new Request.Builder()
-                .url(REGISTER_GAME)
+                .url(JOIN_GAME)
                 .post(body)
                 .build();
 
         executeRequest(request);
-        GamePlay activeGamePlay = new GamePlay(this, game,team,role, HTTP_CLIENT);
+        GamePlay activeGamePlay = new GamePlay(/*this,*/ game.getNumCards()+ game.getNumBlackCards(),team,role, HTTP_CLIENT);
         //gamePlay(game.getGameName(),role);
 
 /*        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
@@ -392,8 +400,8 @@ public class Player implements GameEndListener{
         }*/
     }
 
-    @Override
-    public void onGameEnd() {
-
-    }
+//    @Override
+//    public void onGameEnd() {
+//
+//    }
 }

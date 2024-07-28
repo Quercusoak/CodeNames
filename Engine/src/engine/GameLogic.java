@@ -20,7 +20,6 @@ public class GameLogic implements Engine, Serializable {
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n\\t\\r]";
     private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]";
-    private final static Integer QUIT_TURN = 0;
 
 
     @Override
@@ -85,38 +84,39 @@ public class GameLogic implements Engine, Serializable {
         List<DTOTeam> teams = new ArrayList<>();
         game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
 
-        return new DTOGameData(game.getGameName(), game.getGameStatus(), game.getDictionaryFileName(), game.getDictionaryWords().size(),
-                game.getCardsCount(), game.getBlackCardsCount(), game.getRows(), game.getColumns(), teams);
+        return new DTOGameData(game.getGameName(), /*game.getGameStatus(),*/ game.getDictionaryFileName(), game.getDictionaryWords().size(),
+                game.getNumCards(), game.getNumBlackCards(), game.getRows(), game.getColumns(), teams);
     }
 
     public DTOActiveGame getActiveGameFromGame(GameSession game) {
-        List<DTOCard> cards = new ArrayList<>();
+       /* List<DTOCard> cards = new ArrayList<>();
         game.getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
                 card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
-                card.isBlack(), card.getCardNumber(), card.isFound())));
+                card.isBlack(), card.getCardNumber(), card.isFound())));*/
 
         List<DTOTeam> teams = new ArrayList<>();
         game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
 
-        return new DTOActiveGame(game.getRows(), game.getColumns(), teams, cards);
+        int indexCurrTeam = game.getTeams().indexOf(game.getPlayingTeam());
+
+        return new DTOActiveGame(game.getGameStatus(),getGameBoard(game), teams, indexCurrTeam, game.getDefinition());
     }
 
     public void startGame(GameData game){
 
-        game.setGameStatus(GameStatus.ACTIVE);
-
-        game.setActiveGame(new GameSession(game.getRows(), game.getColumns(), game.getTeams()));
+        game.getGameSession().initNewGame();
+        game.getGameSession().setGameStatus(GameStatus.ACTIVE);
 
         /*Generate cards for game session*/
         generateCards(game);
 
         /*Put cards in board*/
-        /*int i=0;
-        for (GameCard card : game.getCards()){
+        int i=0;
+        for (GameCard card : game.getGameSession().getCards()){
             card.setCardNumber(i+1);
-            game.getBoard()[i / game.getColumns()][i % game.getColumns()]=card;
+            game.getGameSession().getBoard()[i / game.getColumns()][i % game.getColumns()]=card;
             i++;
-        }*/
+        }
     }
 
     private void generateCards(GameData game){
@@ -129,28 +129,28 @@ public class GameLogic implements Engine, Serializable {
         //Partition dictionary into two lists - cards and black cards
         Map<Boolean, List<String>> partitioned = dict.stream()
                 .distinct()
-                .limit(game.getCardsCount()+ game.getBlackCardsCount())
-                .collect(Collectors.partitioningBy(i -> dict.indexOf(i) < game.getCardsCount()));
+                .limit(game.getNumCards()+ game.getNumBlackCards())
+                .collect(Collectors.partitioningBy(i -> dict.indexOf(i) < game.getNumCards()));
 
         List<String> currGameCards = partitioned.get(true);
         List<String> currGameBlackCards = partitioned.get(false);
 
-        currGameBlackCards.forEach(a->game.getActiveGame().addCard(a,isBlack));
+        currGameBlackCards.forEach(a->game.getGameSession().addCard(a,isBlack));
 
         /*Assign to teams and create cards*/
         int count=0;
         for (Team team : game.getTeams()){
             IntStream.range(count,team.getNumberOfCards() + count)
                     .mapToObj(currGameCards::get)
-                    .forEach(a->game.getActiveGame().addCard(a,team,!isBlack));
+                    .forEach(a->game.getGameSession().addCard(a,team,!isBlack));
 
             count=count+team.getNumberOfCards();
         }
 
         /*Rest of words are neutral*/
-        IntStream.range(count,game.getCardsCount())
+        IntStream.range(count,game.getNumCards())
                 .mapToObj(currGameCards::get)
-                .forEach(a->game.getActiveGame().addCard(a,!isBlack));
+                .forEach(a->game.getGameSession().addCard(a,!isBlack));
     }
 
     public DTOBoard getGameBoard(GameSession game){
@@ -184,11 +184,6 @@ public class GameLogic implements Engine, Serializable {
     public TurnStatus playTurn(int cardNum,GameSession game) {
         if (game==null){
             throw new GameInactiveException();
-        }
-
-        //team chose to stop guessing
-        if (cardNum == QUIT_TURN){
-            return new TurnStatus(TurnGuessStatus.TEAMSKIPPED,getDTOTeamFromTeam(game.getPlayingTeam()));
         }
 
         if (cardNum>game.getCards().size() || cardNum<0) {

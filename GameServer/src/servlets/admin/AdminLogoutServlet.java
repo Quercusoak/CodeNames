@@ -23,6 +23,7 @@ public class AdminLogoutServlet extends HttpServlet {
                 AdminSessionManager.setAdminLoggedIn(false);
             }
 
+            response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/plain;charset=UTF-8");
             response.getWriter().write("Admin logout successful.");
         }

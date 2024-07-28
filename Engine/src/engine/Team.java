@@ -17,7 +17,6 @@ public class Team implements Serializable {
         numRegisteredDefiners = 0;
         numRegisteredGuessers = 0;
         players = new HashMap<>(numRequiredDefiners+numRequiredGuessers);
-        isTeamPlaying=true;
     }
 
     public Team(Team t){
@@ -30,7 +29,6 @@ public class Team implements Serializable {
         numRegisteredDefiners=t.numRegisteredDefiners;
         numRegisteredGuessers=t.numRegisteredGuessers;
         players=t.players;
-        isTeamPlaying=t.isTeamPlaying;
     }
 
     private final String name;
@@ -72,9 +70,9 @@ public class Team implements Serializable {
         numTurnsPlayed++;
     }
 
-    private final Map<String, Role> players;
+    private final Map<Player, Role> players;
 
-    public boolean addPlayer(String name, Role role){
+    public boolean addPlayer(Player player, Role role){
         boolean playerAdded = false;
 
         if (players.size()>=numRequiredDefiners+numRequiredGuessers){
@@ -84,14 +82,14 @@ public class Team implements Serializable {
         switch (role.getNumber()){
             case 1:
                 if (numRegisteredDefiners<numRequiredDefiners){
-                    players.put(name, role);
+                    players.put(player, role);
                     numRegisteredDefiners++;
                     playerAdded = true;
                 }
                 break;
             case 2:
                 if (numRegisteredGuessers<numRequiredGuessers){
-                    players.put(name, role);
+                    players.put(player, role);
                     numRegisteredGuessers++;
                     playerAdded = true;
                 }
@@ -103,13 +101,19 @@ public class Team implements Serializable {
     }
 
     private boolean isTeamPlaying;
-    public void setTeamOUtOfGame(){ isTeamPlaying=false;}
+
+    public void setTeamOUtOfGame(String reasonGameOver){
+        isTeamPlaying=false;
+        players.keySet().forEach(p-> p.setGameOver(reasonGameOver));
+    }
+
     public boolean isTeamPlaying(){return isTeamPlaying;}
 
     public void clearTeam(){
         players.clear();
         numRegisteredDefiners = 0;
         numRegisteredGuessers = 0;
-        isTeamPlaying =true;
+        score =0;
+        numTurnsPlayed = 0;
     }
 }

@@ -14,7 +14,6 @@ import managers.Utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 /*View active game as an observer only.*/
 @WebServlet(name = "Watch Active Game", urlPatterns = "/admin/watchGame")
@@ -35,7 +34,7 @@ public class WatchGameServlet extends HttpServlet {
             GameManager gameManager = Utils.getServerManager(getServletContext());
             String gameName = request.getParameter("gameName");
             GameData gameData = gameManager.getActiveGamesList().stream().filter(g->g.getGameName().equals(gameName)).findFirst().get();
-            DTOActiveGame game = gameManager.getActiveGameStatus(gameData.getActiveGame());
+            DTOActiveGame game = gameManager.getActiveGameStatus(gameData.getGameSession());
             Gson gson = new Gson();
             String json = gson.toJson(game);
             out.println(json);

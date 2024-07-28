@@ -31,8 +31,9 @@ public class GameStatusServlet extends HttpServlet {
         } else {
             response.setContentType("application/json");
             try (PrintWriter out = response.getWriter()) {
-                GameSession game = gameManager.getPlayerGame(username).getActiveGame();
-                DTOActiveGame activeGame = gameManager.getActiveGameStatus(game);
+//                GameSession game = gameManager.getPlayerGame(username).getActiveGame();
+//                DTOActiveGame activeGame = gameManager.getActiveGameStatus(game);
+                DTOActiveGame activeGame = gameManager.getActiveGame(username);
                 Gson gson = new Gson();
                 String json = gson.toJson(activeGame);
                 out.println(json);

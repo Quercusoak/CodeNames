@@ -3,7 +3,7 @@ package player;
 public enum PlayerMenuOptions {
     GAMES_INFO("Show games info"),
     JOIN_GAME("Join game"),
-    EXIT("Exit.");
+    EXIT("Exit");
 
     private final String option;
 

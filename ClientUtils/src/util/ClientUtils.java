@@ -13,7 +13,6 @@ public class ClientUtils {
     private static final Scanner scanner = new Scanner(System.in);
     private final static String GO_BACK = "q";
     public final static int USER_SELECTED_QUIT = -1;
-    private final static String GAME_INACTIVE = "Must start the game";
 
 
     public static int getUserSelection(int numOptions, boolean canUserQuit){
@@ -57,12 +56,13 @@ public class ClientUtils {
         });
     }
 
-    public static void printAllGames(List<DTOGameData> gameList){
-        gameList.forEach(game -> {
-            System.out.print("\n"+gameList.indexOf(game)+1 +") ");
-            printGameInfo(game);
-            printTeamsInfo(game.getDtoTeams());
-        });
+    public static void printGameInfo(DTOGameData game) {
+        System.out.println("Game name: " + game.getGameName());
+        System.out.println("Status: " + game.getGameStatus());
+        System.out.println("Board: " + game.getRows() + " x " + game.getColumns());
+        System.out.println("Dictionary file: " + game.getDictionaryFileName() + ", number of unique words: " + game.getNumDictionaryWords());
+        System.out.println("Number of cards in game: " + game.getNumCards());
+        System.out.println("Number of black cards in game: " + game.getNumBlackCards());
     }
 
     public static void printTeamsInfo(List<DTOTeam> teamsList) {
@@ -75,28 +75,15 @@ public class ClientUtils {
         });
     }
 
-    private static void printGameInfo(DTOGameData game) {
-        System.out.println("Game name: " + game.getGameName());
-        System.out.println("Status: " + game.getGameStatus());
-        System.out.println("Board: " + game.getRows() + " x " + game.getCols());
-        System.out.println("Dictionary file: " + game.getDictionaryFileName() + ", number of unique words: " + game.getNumDictionaryWords());
-        System.out.println("Number of cards in game: " + game.getNumCards());
-        System.out.println("Number of black cards in game: " + game.getNumBlackCards());
-    }
+    public static void printBoard(DTOBoard b, boolean visible){
 
-    public static void printTeamsRunningScore(List<DTOTeam> teamsList){
-        teamsList.forEach(t -> {
-            System.out.println("\n"+t.getName()+": "+t.getScore()+"\\"+t.getNumberOfCards());
-            System.out.println("Number of turns played: " + t.getNumTurnsPlayed());
-        });
-    }
+        int rows = b.getRows();
+        int cols = b.getColumns();
 
-    public static void printBoard(List<DTOCard> cards, int rows, int cols, boolean visible){
-
-        List<String> cardWords = cards.stream().map(DTOCard::getWord).collect(Collectors.toList());
+        List<String> cardWords = b.getCards().stream().map(DTOCard::getWord).collect(Collectors.toList());
 
         List<String> cardInfo = new ArrayList<>();
-        cards.forEach(card->{
+        b.getCards().forEach(card->{
             String str = "["+card.getCardNumber()+"] "+(card.isFound()? "V ":"X ");
             if (visible || card.isFound()) {
                 str = str.concat((card.getTeam() != null) ? "(" + card.getTeam().getName() + ")" : (card.isBlack() ? "(BLACK)" : ""));
@@ -116,7 +103,6 @@ public class ClientUtils {
             printBoardRow(cardInfo, i, cols, maxLength);
         }
         printBorder(maxLength, cols, "+");
-        System.out.println();
     }
 
     private static void printBoardRow(List<String> b, int i,int col, int padding){
@@ -146,22 +132,10 @@ public class ClientUtils {
         System.out.println(str);
     }
 
-    //printing for admin only in this design
-    private void activeGameStatus(DTOGameData game,DTOTeam currentTeam, boolean isVisibile){
-        if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            //printBoard(game.getCards(),game.getRows(),game.getCols(),isVisibile);
-            game.getDtoTeams().forEach(t -> {
-                printTeamScore(t);
-                System.out.println("Number of turns played: " + t.getNumTurnsPlayed());
-            });
-            System.out.println("Next turn: " + currentTeam.getName());
-        }
-        else{
-            System.out.println(GAME_INACTIVE);
-        }
-    }
 
-    private void printTeamScore(DTOTeam currentTeam){
-        System.out.println("\n"+currentTeam.getName()+": "+currentTeam.getScore()+"\\"+currentTeam.getNumberOfCards());
+    public static void printTeamScore(DTOTeam t){
+        System.out.println("Team "+t.getName());
+        System.out.println("\tScore:"+t.getScore()+"\\"+t.getNumberOfCards());
+        System.out.println("\tNumber of turns played: " + t.getNumTurnsPlayed());
     }
 }

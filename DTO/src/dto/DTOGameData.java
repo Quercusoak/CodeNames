@@ -9,7 +9,7 @@ public class DTOGameData {
         return gameName;
     }
 
-    private final GameStatus gameStatus;
+    private GameStatus gameStatus;
     public GameStatus getGameStatus() {
         return gameStatus;
     }
@@ -39,13 +39,13 @@ public class DTOGameData {
         return rows;
     }
 
-    private final int cols;
-    public int getCols() {
-        return cols;
+    private final int columns;
+    public int getColumns() {
+        return columns;
     }
 
-    private final List<DTOTeam> teamsList;
-    public List<DTOTeam> getDtoTeams() {return teamsList;}
+    private final List<DTOTeam> teams;
+    public List<DTOTeam> getDtoTeams() {return teams;}
 
 //    private List<DTOCard> cards;
 //    public List<DTOCard> getCards() {
@@ -53,17 +53,17 @@ public class DTOGameData {
 //    }
 
 
-    public DTOGameData(String name, GameStatus status, String dictionaryFileName, int numDictionaryWords, int numCards,int numBlackCards,
+    public DTOGameData(String name, /*GameStatus status,*/ String dictionaryFileName, int numDictionaryWords, int numCards,int numBlackCards,
                        int rows, int cols ,List<DTOTeam> teams/*, List<DTOCard> cards*/){
         gameName = name;
-        gameStatus = status;
+//        gameStatus = status;
         this.dictionaryFileName = dictionaryFileName;
         this.numDictionaryWords = numDictionaryWords;
         this.numCards = numCards;
         this.numBlackCards = numBlackCards;
         this.rows = rows;
-        this.cols = cols;
-        this.teamsList = teams;
+        this.columns = cols;
+        this.teams = teams;
 //        this.cards = cards;
     }
 }

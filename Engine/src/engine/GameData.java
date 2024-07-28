@@ -3,18 +3,16 @@ package engine;
 import dto.GameStatus;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class GameData implements Serializable {
 
     private final String gameName;
     public String getGameName() {return gameName;}
 
-    private GameStatus gameStatus;
-    public GameStatus getGameStatus() {return gameStatus;}
-    public void setGameStatus(GameStatus gameStatus) {this.gameStatus = gameStatus;}
+    private final GameStatus gameStatus;
+    public GameStatus getGameStatus() {return gameSession.getGameStatus();}
+//    public void setGameStatus(GameStatus gameStatus) {this.gameStatus = gameStatus;}
 
     private final String dictionaryFileName;
     public String getDictionaryFileName() {return dictionaryFileName;}
@@ -24,11 +22,11 @@ public class GameData implements Serializable {
     }
     private final List<String> dictionaryWords;
 
-    private final int cardsCount;
-    public int getCardsCount() {return cardsCount;}
+    private final int numCards;
+    public int getNumCards() {return numCards;}
 
-    private final int blackCardsCount;
-    public int getBlackCardsCount() { return blackCardsCount; }
+    private final int numBlackCards;
+    public int getNumBlackCards() { return numBlackCards; }
 
     private final int rows;
     public int getRows() { return rows;}
@@ -41,10 +39,10 @@ public class GameData implements Serializable {
         return teams;
     }
 
-    private GameSession activeGame;
-    public GameSession getActiveGame() {return activeGame;}
-    public void setActiveGame(GameSession activeGame) {this.activeGame = activeGame;}
+    private final GameSession gameSession;
+    public GameSession getGameSession() {return gameSession;}
 
+    private final int numDictionaryWords;
 /*    private final GameCard[][] board;
     public GameCard[][] getBoard() {
         return board;
@@ -65,14 +63,18 @@ public class GameData implements Serializable {
     public GameData(List<String> allWords, List<Team> teams, int numCards,
                             int numBlackCards, int rows, int columns, String gameName ,String dictionaryFileName){
         this.gameName = gameName;
-        gameStatus = GameStatus.PENDING;
+//        gameStatus = GameStatus.PENDING;
         this.dictionaryFileName = dictionaryFileName;
         this.dictionaryWords = allWords;
-        this.cardsCount = numCards;
-        this.blackCardsCount = numBlackCards;
+        this.numCards = numCards;
+        this.numBlackCards = numBlackCards;
         this.rows = rows;
         this.columns =columns;
         this.teams = teams;
+        numDictionaryWords = allWords.size();
+
+        gameSession = new GameSession(rows,columns,teams);
+        gameStatus = gameSession.getGameStatus();
 /*        board = new GameCard[rows][columns];
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;*/
