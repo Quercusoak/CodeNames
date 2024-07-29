@@ -105,24 +105,24 @@ public class GameManager {
             throw new RuntimeException(NOT_PLAYER_TURN + "\nCurrently turn of team " + game.getPlayingTeam().getName() + ", role: " + game.getCurrentRole());
         }
 
-        DTOBoard board = gameLogic.getGameBoard(game); //Get updated board
-
         switch (game.getCurrentRole()) {
             case DEFINER:
                 game.setDefinition(definition);
                 game.setNumCardsToGuess(cardNum);
                 game.setCurrentRole(Role.GUESSER);
-                turnOutcome = new TurnInfo(board);
+                turnOutcome = new TurnInfo(gameLogic.getGameBoard(game));
                 break;
             case GUESSER:
 
                 if (cardNum == QUIT_TURN) {
+                    game.setCurrentRole(Role.DEFINER);
                     gameLogic.turnEnd(game);
                     throw new RuntimeException(TURN_SKIPPED);
                 }
 
                 try {
                     TurnStatus guessOutcome = gameLogic.playTurn(cardNum - 1, game); //-1 for board indexes
+                    DTOBoard board = gameLogic.getGameBoard(game); //Get updated board
                     String reasonGameOver = null;
 
                     if (guessOutcome.getStatus().equals(TurnGuessStatus.BLACK) || guessOutcome.getStatus().getVictory()) { //Check if team out of the game: by victory or black card.
@@ -146,6 +146,7 @@ public class GameManager {
                         //check if game over - when only one team is left then notify the players of the remaining team that they lost, and remove them from game
                         if (game.getTeams().stream().filter(Team::isTeamPlaying).count() == 1) {
 
+                            GameData gameData = player.getGame();
                             game.getTeams().stream()
                                     .filter(Team::isTeamPlaying)
                                     .forEach(t ->
@@ -154,7 +155,7 @@ public class GameManager {
                                                 p.removeGame();
                                             }));
 
-                            player.getGame().gameEnded();// Clear the game session
+                            gameData.gameEnded();// Clear the game session
 
                         } else {
                             game.setCurrentRole(Role.DEFINER);
