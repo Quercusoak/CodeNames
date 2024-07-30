@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import java.util.Scanner;
 
 public class Constants {
-    private final static String BASE_URL = "http://localhost:8080";
+    private final static String BASE_URL = "http://localhost:8080/GameServer_war";
 
     public final static String GAMES_LIST = BASE_URL + "/gamesList";
     public final static String JOIN_GAME = BASE_URL + "/joinGame";

@@ -2,7 +2,7 @@
 public class Constants {
 
     // Server resources locations
-    private final static String BASE_URL = "http://localhost:8080";
+    private final static String BASE_URL = "http://localhost:8080/GameServer_war";
     private final static String CONTEXT_PATH = "/admin";
     private final static String FULL_SERVER_PATH = BASE_URL + CONTEXT_PATH;
 
