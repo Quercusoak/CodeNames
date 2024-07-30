@@ -18,7 +18,6 @@ public class Team implements Serializable {
         numRegisteredDefiners = 0;
         numRegisteredGuessers = 0;
         players = new HashMap<>(numRequiredDefiners+numRequiredGuessers);
-        isTeamPlaying = true;
     }
 
     public Team(Team t){
@@ -31,7 +30,6 @@ public class Team implements Serializable {
         numRegisteredDefiners=t.numRegisteredDefiners;
         numRegisteredGuessers=t.numRegisteredGuessers;
         players=t.players;
-        isTeamPlaying =  t.isTeamPlaying;
     }
 
     private final String name;
@@ -103,17 +101,12 @@ public class Team implements Serializable {
         return playerAdded;
     }
 
-    private boolean isTeamPlaying;
-
     public void setTeamOUtOfGame(String reasonGameOver){
-        isTeamPlaying=false;
         players.keySet().forEach(p-> {
             p.setGameOver(reasonGameOver);
-            p.removeGame();
         });
+        clearTeam();
     }
-
-    public boolean isTeamPlaying(){return isTeamPlaying;}
 
     public void clearTeam(){
         players.clear();
@@ -121,10 +114,5 @@ public class Team implements Serializable {
         numRegisteredGuessers = 0;
         score =0;
         numTurnsPlayed = 0;
-        isTeamPlaying = true;
-    }
-
-    public Set<Player> getPlayers(){
-        return players.keySet();
     }
 }

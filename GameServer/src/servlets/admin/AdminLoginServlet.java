@@ -17,14 +17,15 @@ public class AdminLoginServlet extends HttpServlet {
 
         synchronized (AdminSessionManager.class) {
             if (AdminSessionManager.isAdminLoggedIn()) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Admin already logged in.");
-                return;
-            }
+            }else {
 
-            HttpSession session = request.getSession(true);
-            session.setAttribute(AdminSessionManager.ADMIN_SESSION_KEY, true);
-            AdminSessionManager.setAdminLoggedIn(true);
-            response.getWriter().write("Admin login successful.");
+                HttpSession session = request.getSession(true);
+                session.setAttribute(AdminSessionManager.ADMIN_SESSION_KEY, true);
+                AdminSessionManager.setAdminLoggedIn(true);
+                response.getWriter().write("Admin login successful.");
+            }
         }
     }
 }

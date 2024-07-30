@@ -1,7 +1,6 @@
 import com.google.gson.Gson;
 import dto.DTOActiveGame;
 import dto.DTOGameData;
-import dto.GameStatus;
 import okhttp3.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -164,7 +163,7 @@ public class Admin {
             System.out.println("No active games.");
         }
         else {
-            /*Displays al active games:*/
+            /*Displays all active games:*/
             System.out.println("Select game to join as an observer: ");
             gamesList.forEach(game -> {
                 System.out.print((gamesList.indexOf(game)+1)+") Game name: " + game.getGameName());

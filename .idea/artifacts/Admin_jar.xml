@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Admin:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Admin_jar</output-path>
+    <root id="archive" name="Admin.jar">
+      <element id="module-output" name="Admin" />
+      <element id="module-output" name="DTO" />
+      <element id="module-output" name="ClientUtils" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../okhttp-4.9.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../kotlin-stdlib-1.4.10.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../okio-2.8.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../gson-2.8.8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../annotations-13.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

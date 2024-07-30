@@ -65,6 +65,8 @@ public class LoadFileServlet extends HttpServlet {
                  response.getWriter().write("Team names must be unique, change duplicate names: "+e.getRepeatingName());
             }catch (ZeroCards e){
                  response.getWriter().write("Number of cards in game and per team must be positive number.");
+            } catch (RuntimeException e){
+                response.getWriter().write(e.getMessage());
             }
         }
     }

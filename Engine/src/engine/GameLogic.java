@@ -8,6 +8,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,12 +75,6 @@ public class GameLogic implements Engine, Serializable {
     }
 
     private DTOGameData getDTOGameDataFromGame(GameData game) {
-        /*List<DTOCard> cards = new ArrayList<>();
-        if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            game.getActiveGame().getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
-                    card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
-                    card.isBlack(), card.getCardNumber(), card.isFound())));
-        }*/
 
         List<DTOTeam> teams = new ArrayList<>();
         game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
@@ -89,15 +84,11 @@ public class GameLogic implements Engine, Serializable {
     }
 
     public DTOActiveGame getActiveGameFromGame(GameSession game) {
-       /* List<DTOCard> cards = new ArrayList<>();
-        game.getCards().forEach(card -> cards.add(new DTOCard(card.getWord(),
-                card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
-                card.isBlack(), card.getCardNumber(), card.isFound())));*/
 
         List<DTOTeam> teams = new ArrayList<>();
         game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
 
-        int indexCurrTeam = game.getTeams().indexOf(game.getPlayingTeam());
+        int indexCurrTeam = game.getGameStatus().equals(GameStatus.ACTIVE)? game.getTeams().indexOf(game.getPlayingTeam()) : 0;
 
         return new DTOActiveGame(game.getGameStatus(),getGameBoard(game), teams, indexCurrTeam, game.getDefinition());
     }
@@ -171,14 +162,6 @@ public class GameLogic implements Engine, Serializable {
         return new DTOBoard(cards, game.getRows(), game.getColumns());
     }
 
-    public Team getCurrentTeam(GameSession game){
-        if (game==null){
-            throw new GameInactiveException();
-        }
-
-        return game.getPlayingTeam();
-    }
-
     @Override
     public TurnStatus playTurn(int cardNum,GameSession game) {
         if (game==null){
@@ -232,18 +215,19 @@ public class GameLogic implements Engine, Serializable {
         game.getPlayingTeam().incTurnCounter();
         /*Increment current team to next:*/
         game.nextTeam();
+        if (game.getCurrentRole().equals(Role.GUESSER)){
+            game.setCurrentRole(Role.DEFINER);
+        }
     }
 
-//    public TeamsList getTeams(){
-//        return new TeamsList(game.getTeams());
-//    }
 
     private List<String> getWordsFromXML(String ecnDictionaryFile, int numCardsinGame){
         /*Get the words from ECN-Dictionary-File*/
         Set<String> dictionary = new HashSet<>();
+        Path pathDict = Paths.get(ecnDictionaryFile);
         try (BufferedReader in = new BufferedReader(
                 new InputStreamReader(
-                        Files.newInputStream(Paths.get(ecnDictionaryFile))))) {
+                        Files.newInputStream(pathDict)))) {
 
             in.lines()
                     .forEach(s-> dictionary.addAll(Arrays.stream(s
@@ -253,8 +237,10 @@ public class GameLogic implements Engine, Serializable {
                             .map(String::toLowerCase)
                             .distinct()
                             .collect(Collectors.toList())));
+        } catch (java.nio.file.NoSuchFileException e){
+            throw new RuntimeException("Dictionary file not found.");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
 
         /*Check if there are enough words to start game with specified card amount.*/

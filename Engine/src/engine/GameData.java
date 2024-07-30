@@ -12,13 +12,16 @@ public class GameData implements Serializable {
 
     private GameStatus gameStatus;
     public GameStatus getGameStatus() {return gameSession.getGameStatus();}
+
     public void newActiveGameSession() {
         this.gameStatus = GameStatus.ACTIVE;
-        this.gameSession.setGameStatus(GameStatus.ACTIVE);
+        this.gameSession.startGame();
     }
+
     public void gameEnded(){
         this.gameStatus = GameStatus.PENDING;
-        gameSession.clearSession();
+        teams.forEach(Team::clearTeam);
+        gameSession.clearSession(teams);
     }
 
     private final String dictionaryFileName;
@@ -50,22 +53,6 @@ public class GameData implements Serializable {
     public GameSession getGameSession() {return gameSession;}
 
     private final int numDictionaryWords;
-/*    private final GameCard[][] board;
-    public GameCard[][] getBoard() {
-        return board;
-    }
-
-    private final Set<GameCard> cardsInGame;
-    public Set<GameCard> getCards() {
-        return cardsInGame;
-    }
-
-    private int currTeamIndex;
-
-    public Team getPlayingTeam() {
-        return teams.get(currTeamIndex);
-    }*/
-
 
     public GameData(List<String> allWords, List<Team> teams, int numCards,
                             int numBlackCards, int rows, int columns, String gameName ,String dictionaryFileName){
@@ -82,28 +69,5 @@ public class GameData implements Serializable {
 
         gameSession = new GameSession(rows,columns,teams);
         gameStatus = gameSession.getGameStatus();
-/*        board = new GameCard[rows][columns];
-        cardsInGame = new HashSet<>();
-        currTeamIndex = 0;*/
     }
-
-/*    public void addCard(String word, Team team, boolean isBlack){
-        cardsInGame.add(new GameCard(word, team, isBlack));
-    }
-    public void addCard(String word, boolean isBlack){
-        cardsInGame.add(new GameCard(word, isBlack));
-    }
-
-    public void clearFinishedGame()
-    {
-        cardsInGame.clear();
-        currTeamIndex = 0;
-        teams.forEach(Team::clearTeam);
-    }
-
-    public void nextTeam(){
-        do {
-            currTeamIndex = (currTeamIndex == (teams.size() - 1)) ? 0 : currTeamIndex + 1;
-        }while (!teams.get(currTeamIndex).isTeamPlaying());
-    }*/
 }

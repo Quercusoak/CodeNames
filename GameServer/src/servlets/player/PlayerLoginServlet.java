@@ -25,7 +25,7 @@ public class PlayerLoginServlet extends HttpServlet {
             String usernameFromParameter = request.getParameter(SessionManger.USERNAME);
 
             if (usernameFromParameter == null || usernameFromParameter.isEmpty()) {
-                response.setStatus(HttpServletResponse.SC_CONFLICT);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
             else {
                 usernameFromParameter = usernameFromParameter.trim();

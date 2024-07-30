@@ -2,9 +2,7 @@ package servlets.player;
 
 import com.google.gson.Gson;
 import dto.DTOActiveGame;
-import engine.GameData;
 import engine.GameManager;
-import engine.GameSession;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,7 +13,6 @@ import managers.Utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 @WebServlet("/status")
 public class GameStatusServlet extends HttpServlet {

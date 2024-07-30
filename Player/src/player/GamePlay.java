@@ -20,9 +20,7 @@ public class GamePlay {
     private final static String MAIN_MENU = "Choose action:";
     private static String SELECTION_OUT_OF_BOUNDS(int maxCardsNum) {return "Number out of board's bound. Select number between 1 and "+maxCardsNum;}
     private final static String EXIT_MESSAGE = "Thanks for playing! Goodbye!";
-    private final static String GAME_INACTIVE = "Game inactive.";
 
-//    private final GameEndListener listener;
     private final String playerName;
     private final DTOTeam team;
     private final Role role;
@@ -30,8 +28,7 @@ public class GamePlay {
     private final int numCardsOnBoard;
     private boolean gameEnded = false;
 
-    public GamePlay(/*GameEndListener listener,*/ int numCardsOnBoard, DTOTeam team, Role role, OkHttpClient HTTP_CLIENT, String playerName ){
-//        this.listener = listener;
+    public GamePlay( int numCardsOnBoard, DTOTeam team, Role role, OkHttpClient HTTP_CLIENT, String playerName ){
         this.team = team;
         this.role = role;
         this.HTTP_CLIENT = HTTP_CLIENT;
@@ -75,6 +72,10 @@ public class GamePlay {
         String jsonData = executeRequest(request);
 
         DTOActiveGame game =  GSON_INSTANCE.fromJson(jsonData, DTOActiveGame.class);
+        if (game.getReasonGameEnded()!=null){
+            gameEnded = true;
+            throw new RuntimeException(game.getReasonGameEnded());
+        }
 
         System.out.println("\nGame Status: " + game.getGameStatus());
         ClientUtils.printTeamScore(game.getPlayingTeam());
@@ -94,6 +95,7 @@ public class GamePlay {
         String jsonData = executeRequest(request);
 
         TurnInfo turnInfo = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class); //Get turn info if game active- otherwise catches error in menu that game pending
+        checkGameEnded(turnInfo);
 
         //Got current game board, print it:
         printBoard(turnInfo.getBoard(),role.equals(Role.DEFINER));
@@ -125,7 +127,9 @@ public class GamePlay {
                 .post(body)
                 .build();
 
-        executeRequest(request);
+        String jsonData = executeRequest(request);
+        TurnInfo info = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class);
+        checkGameEnded(info);
         System.out.println("Team "+team.getName()+" starting to guess words in definition "+definition+".");
     }
 
@@ -145,8 +149,15 @@ public class GamePlay {
         String jsonData = executeRequest(request);
         TurnInfo guessOutcome = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class);
 
-        printTurnStauts(guessOutcome.getTurnStatus());
         printBoard(guessOutcome.getBoard(),false);
+        printTurnStauts(guessOutcome.getTurnStatus());
+    }
+
+    private void checkGameEnded(TurnInfo turnInfo) {
+        if (turnInfo.getReasonGameOver() != null) {
+            gameEnded = true;
+            throw new RuntimeException(turnInfo.getReasonGameOver());
+        }
     }
 
     private String executeRequest(Request request) throws IOException {
@@ -155,21 +166,7 @@ public class GamePlay {
             if (!response.isSuccessful()) {
                 throw new IOException(response.body().string());
             } else {
-                /*return response.body().string();*/
-                String jsonData = response.body().string();
-
-                try {
-                    TurnInfo turnInfo = GSON_INSTANCE.fromJson(jsonData, TurnInfo.class);
-
-                    if (turnInfo.getReasonGameOver() != null) {
-                        gameEnded = true;
-                        throw new RuntimeException(turnInfo.getReasonGameOver());
-                    }else {
-                        return jsonData;
-                    }
-                }catch (IllegalStateException e){
-                    throw new RuntimeException(e.getMessage());
-                }
+                return response.body().string();
             }
         }
     }
@@ -205,6 +202,7 @@ public class GamePlay {
         switch (g.getStatus()){
             case BLACK:
                 System.out.println("Team "+g.getTeamWhoseCardItWas().getName()+" lost!");
+                gameEnded = true;
                 break;
             case OTHERTEAM:
             case CURRENTTEAM:

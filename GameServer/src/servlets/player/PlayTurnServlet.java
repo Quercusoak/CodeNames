@@ -28,7 +28,7 @@ public class PlayTurnServlet extends HttpServlet {
         Player player = gameManager.getPlayer(username);
         String definition = "";
         int numCard = -1;
-        TurnInfo status = null;
+        TurnInfo status;
 
         response.setContentType("application/json");
 
@@ -59,35 +59,6 @@ public class PlayTurnServlet extends HttpServlet {
             out.println(gson.toJson(status));
             out.flush();
         }
-
-        /*if (player.isGameOver()){
-
-            try (PrintWriter out = response.getWriter()) {
-                DTOGameOver dtoGameOver = new DTOGameOver(player.getReasonGameOver());
-                out.println(gson.toJson(dtoGameOver));
-                out.flush();
-            }
-        }else {
-
-            switch (player.getRole()) {
-                case DEFINER:
-                    definition = request.getParameter("definition");
-                    numCard = Integer.parseInt(request.getParameter("numCargdsToGuess"));
-                    break;
-                case GUESSER:
-                    numCard = Integer.parseInt(request.getParameter("cardNum"));
-                    break;
-            }
-
-            try {
-                TurnStatus status = gameManager.singleTurn(player, numCard, definition);
-                response.getWriter().write(gson.toJson(status));
-            } catch (RuntimeException e) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().println(e.getMessage());
-            }
-        }*/
-
     }
 
 
@@ -110,23 +81,5 @@ public class PlayTurnServlet extends HttpServlet {
             }
             out.flush();
         }
-
-        /*try (PrintWriter out = response.getWriter()){
-
-            if (!player.isGameOver()) {
-                try {
-                    TurnInfo turnInfo = gameManager.getTurnInfo(player);
-                    out.println(gson.toJson(turnInfo));
-                }catch (RuntimeException e) {
-                    response.setStatus(HttpServletResponse.SC_CONFLICT);
-                    out.println(e.getMessage());
-                }
-
-            }else {
-                DTOGameOver dtoGameOver = new DTOGameOver(player.getReasonGameOver());
-                out.println(gson.toJson(dtoGameOver));
-            }
-            out.flush();
-        }*/
     }
 }

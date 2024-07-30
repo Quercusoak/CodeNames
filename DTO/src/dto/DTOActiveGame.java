@@ -12,21 +12,6 @@ public class DTOActiveGame {
         return teams;
     }
 
-/*    private final int rows;
-    public int getRows() {
-        return rows;
-    }
-
-    private final int cols;
-    public int getColumns() {
-        return cols;
-    }
-
-    private final List<DTOCard> cards;
-    public List<DTOCard> getCardList() {
-        return cards;
-    }*/
-
     private final DTOBoard board;
     public DTOBoard getBoard() {return board;}
 
@@ -47,8 +32,21 @@ public class DTOActiveGame {
         this.teams = teams;
         this.currTeamIndex = currTeamIndex;
         this.definitionToGuess = definitionToGuess;
+        reasonGameEnded=null;
     }
 
     private final String definitionToGuess;
     public String getDefinitionToGuess() {return definitionToGuess;}
+
+    private final String reasonGameEnded;
+    public String getReasonGameEnded() {return reasonGameEnded;}
+
+    public DTOActiveGame(String reasonGameEnded) {
+        this.reasonGameEnded = reasonGameEnded;
+        this.gameStatus = null;
+        this.board = null;
+        this.teams = null;
+        this.currTeamIndex = 0;
+        this.definitionToGuess = null;
+    }
 }

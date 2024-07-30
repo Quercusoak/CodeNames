@@ -3,23 +3,25 @@ package engine;
 import dto.GameStatus;
 import dto.Role;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class GameSession {
 
-    public GameSession(int rows, int columns, List<Team> teams){
+    public GameSession(int rows, int columns,List<Team> teams){
         board = new GameCard[rows][columns];
-        this.teams = teams;
+        this.teams = new ArrayList<>();
         cardsInGame = new HashSet<>();
         currTeamIndex = 0;
         this.rows = rows;
         this.columns = columns;
         gameStatus = GameStatus.PENDING;
+        this.teams.addAll(teams);
     }
 
-    private final List<Team> teams;
+    private List<Team> teams;
     public List<Team> getTeams() {
         return teams;
     }
@@ -59,15 +61,16 @@ public class GameSession {
     }
 
 
-    public void nextTeam(){
-        do {
-            currTeamIndex = (currTeamIndex == (teams.size() - 1)) ? 0 : currTeamIndex + 1;
-        }while (!teams.get(currTeamIndex).isTeamPlaying());
+    public void nextTeam() {
+        currTeamIndex = (currTeamIndex >= (teams.size() - 1)) ? 0 : currTeamIndex + 1;
     }
 
     private GameStatus gameStatus;
     public GameStatus getGameStatus() {return gameStatus;}
-    public void setGameStatus(GameStatus gameStatus) { this.gameStatus=gameStatus;}
+
+    public void startGame() {
+        this.gameStatus=GameStatus.ACTIVE;
+    }
 
     private String definition;
     private int numCardsToGuess;
@@ -89,10 +92,25 @@ public class GameSession {
         this.currentRole = currentRole;
     }
 
-    public void clearSession(){
+    public void removeTeam(Team team, String reasonTeamOut){
+        team.setTeamOUtOfGame(reasonTeamOut);
+
+        Team tmp;
+        if (getPlayingTeam().equals(team)){
+            tmp = teams.get((currTeamIndex >= (teams.size() - 1)) ? 0 : currTeamIndex + 1); //get next team
+        }else{
+            tmp = teams.get(currTeamIndex);
+        }
+
+        teams.remove(team);
+        currTeamIndex = teams.indexOf(tmp);
+    }
+
+    public void clearSession(List<Team> teams){
         cardsInGame.clear();
         currTeamIndex = 0;
-        teams.forEach(Team::clearTeam);
+        this.teams.clear();
+        this.teams.addAll(teams);
         gameStatus = GameStatus.PENDING;
     }
 }
