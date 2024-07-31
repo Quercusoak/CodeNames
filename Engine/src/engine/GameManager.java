@@ -41,7 +41,7 @@ public class GameManager {
                 .collect(Collectors.toList());
     }
 
-    public boolean addPlayerToGame(String playerName, String gameName, String teamName, String role) {
+    public synchronized boolean addPlayerToGame(String playerName, String gameName, String teamName, String role) {
 
         Player player = playerSet.get(playerName);
 
@@ -80,7 +80,7 @@ public class GameManager {
 
     }
 
-    public TurnInfo singleTurn(Player player, int cardNum ,String definition) {
+    public synchronized TurnInfo singleTurn(Player player, int cardNum ,String definition) {
 
         if (!player.getGame().getGameStatus().equals(GameStatus.ACTIVE)) {
             throw new RuntimeException(GAME_INACTIVE);
@@ -158,7 +158,7 @@ public class GameManager {
         return turnOutcome;
     }
 
-    public TurnInfo getTurnInfo(Player player) {
+    public synchronized TurnInfo getTurnInfo(Player player) {
 
         if (player.isGameOver()) {
             return new TurnInfo(player.getReasonGameOver());
@@ -191,14 +191,18 @@ public class GameManager {
 
 
     public DTOActiveGame getActiveGameStatus(String gameName) {
-        GameData game = gameList.stream()
+        Optional<GameData> game = gameList.stream()
                 .filter(g->g.getGameName().equals(gameName))
-                .findFirst()
-                .get();
-        if (game.getGameStatus().equals(GameStatus.ACTIVE)) {
-            return gameLogic.getActiveGameFromGame(game.getGameSession());
+                .findFirst();
+
+        if (game.isPresent()) {
+            if (game.get().getGameStatus().equals(GameStatus.ACTIVE)) {
+                return gameLogic.getActiveGameFromGame(game.get().getGameSession());
+            } else {
+                throw new RuntimeException("Game Over.");
+            }
         }else{
-            throw new RuntimeException("Game Over.");
+            throw new RuntimeException("Game Not Found.");
         }
     }
 
