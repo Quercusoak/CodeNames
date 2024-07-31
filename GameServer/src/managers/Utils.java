@@ -1,5 +1,6 @@
 package managers;
 
+import engine.GameManager;
 import jakarta.servlet.ServletContext;
 
 public class Utils {
@@ -8,12 +9,12 @@ public class Utils {
 
     private static final Object serverManagerLock = new Object();
 
-    public static ServerManager getServerManager(ServletContext servletContext) {
+    public static GameManager getServerManager(ServletContext servletContext) {
         synchronized (serverManagerLock) {
             if (servletContext.getAttribute(SERVER_MANAGER_ATTRIBUTE_NAME) == null) {
-                servletContext.setAttribute(SERVER_MANAGER_ATTRIBUTE_NAME, new ServerManager());
+                servletContext.setAttribute(SERVER_MANAGER_ATTRIBUTE_NAME, new GameManager());
             }
         }
-        return (ServerManager) servletContext.getAttribute(SERVER_MANAGER_ATTRIBUTE_NAME);
+        return (GameManager) servletContext.getAttribute(SERVER_MANAGER_ATTRIBUTE_NAME);
     }
 }

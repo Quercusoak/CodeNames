@@ -1,61 +1,276 @@
 package player;
 
-import java.util.Arrays;
-import java.util.Scanner;
+import com.google.gson.reflect.TypeToken;
+import dto.DTOGameData;
+import dto.DTOTeam;
+import dto.Role;
+import okhttp3.*;
+import util.ClientUtils;
+import org.jetbrains.annotations.NotNull;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.*;
+
+import static player.Constants.*;
+import static util.ClientUtils.printGameInfo;
+import static util.ClientUtils.printTeamsInfo;
 
 public class Player {
-    private final static String SELECTION_OUT_OF_BOUNDS = "Input option number from list.";
-    private final static String MAIN_MENU ="Chose action:";
-    private final static String EXIT_MESSAGE = "Admin logged out successfully.";
 
-    public void menu() {
+    public final static OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder()
+            .cookieJar(new CookieJar() {
+                private final Map<String, List<Cookie>> cookieStore = new HashMap<>();
+
+                @Override
+                public void saveFromResponse(@NotNull HttpUrl url, @NotNull List<Cookie> cookies) {
+                    cookieStore.put(url.host(), cookies);
+                }
+
+                @NotNull
+                @Override
+                public List<Cookie> loadForRequest(@NotNull HttpUrl url) {
+                    List<Cookie> cookies = cookieStore.get(url.host());
+                    return cookies != null ? cookies : new ArrayList<>();
+                }
+            }).build();
+
+    private String playerName;
+
+    public Player(){
+        login();
+    }
+
+    private void login(){
+
+        boolean validName = false;
+        do {
+            System.out.println("Please enter name:");
+            playerName = scanner.nextLine();
+
+            if (playerName.isEmpty()) {
+                System.out.println("Name cannot be empty.");
+            }
+            else if (registerUserName(playerName)) {
+                validName = true;
+            }
+        }while(!validName);
+
+        System.out.println("Welcome " + playerName);
+        menu();
+    }
+
+    private boolean registerUserName(String userName){
+        String finalUrl = HttpUrl
+                .parse(PLAYER_LOGIN)
+                .newBuilder()
+                .addQueryParameter("username", userName)
+                .build()
+                .toString();
+
+        Request request = new Request.Builder()
+                .url(finalUrl)
+                .get()
+                .build();
+
+        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException(response.body().string());
+            }
+            else {
+                return true;
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    private String executeRequest(Request request) throws IOException{
+        try (Response response = HTTP_CLIENT.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException(response.body().string());
+            }
+            else {
+                return response.body().string();
+            }
+        }
+    }
+
+    private void menu() {
         boolean exit = false;
         while (!exit) {
-            showMenu();
+            System.out.println(MAIN_MENU);
+            Arrays.stream(PlayerMenuOptions.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c));
             try {
-                switch (PlayerMenuOptions.values()[getUserSelection(PlayerMenuOptions.values().length)]) {
+                switch (PlayerMenuOptions.values()[ClientUtils.getUserSelection(PlayerMenuOptions.values().length, false)]) {
                     case GAMES_INFO:
-                        //printAllGames();
+                        printAllGames();
                         break;
                     case JOIN_GAME:
-                        //JoinGame();
+                        joinGame();
                         break;
                     case EXIT:
-                        System.out.println(EXIT_MESSAGE);
+                        exit();
                         exit = true;
                         break;
                 }
-            } catch (RuntimeException e){
+            } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
         }
     }
 
-    private void showMenu(){
-        /*Enum of menu options*/
-        System.out.println();
-        System.out.println(MAIN_MENU);
-        Arrays.stream(PlayerMenuOptions.values()).forEach(c->System.out.println((c.ordinal()+1)+") "+ c));
-    }
+    private void printAllGames() throws IOException {
+        Request request = new Request.Builder()
+                .url(GAMES_LIST)
+                .get()
+                .build();
 
-    private int getUserSelection(int numOptions){
-        Scanner scanner = new Scanner(System.in);
-        int userInput;
-        int userSelection = 0;
+        String jsonData = executeRequest(request);
+        Type listType = new TypeToken<List<DTOGameData>>() {
+        }.getType();
+        List<DTOGameData> gameList = GSON_INSTANCE.fromJson(jsonData, listType);
 
-        while (userSelection==0) {
-            try {
-                userInput = Integer.parseInt(scanner.nextLine());
-                if (userInput > 0 && userInput <=numOptions) {
-                    userSelection = userInput-1;
-                }
-                else {
-                    System.out.println(SELECTION_OUT_OF_BOUNDS);
-                }
-            }catch (RuntimeException e){
-                System.out.println(SELECTION_OUT_OF_BOUNDS);
-            }
+        if (gameList.isEmpty()) {
+            System.out.println("No games found");
         }
-        return userSelection;
+        else {
+            gameList.forEach(game -> {
+                System.out.print("\n"+(gameList.indexOf(game)+1) +") ");
+                printGameInfo(game);
+                printTeamsInfo(game.getDtoTeams());
+            });
+        }
     }
+
+    private void joinGame() throws IOException {
+        Request request = new Request.Builder()
+                .url(JOIN_GAME)
+                .get()
+                .build();
+
+        String jsonData = executeRequest(request);
+        Type listType = new TypeToken<List<DTOGameData>>() {}.getType();
+        List<DTOGameData> gameList = GSON_INSTANCE.fromJson(jsonData, listType);
+
+        if (gameList.isEmpty()) {
+            System.out.println("No pending games found");
+        } else {
+            selectGameToRegister(gameList);
+        }
+    }
+
+    /*Sync teams and roles to catch first*/
+    private void selectGameToRegister(List<DTOGameData> gameList) throws IOException {
+        gameList.forEach(game -> {
+            System.out.println("\n"+(gameList.indexOf(game)+1) +") Game: "+game.getGameName());
+            System.out.println("Teams:");
+            printTeamsInfo(game.getDtoTeams());
+        });
+
+        int userSelection;
+
+        //Select game
+        System.out.println();
+        System.out.println(SELECT_GAME);
+        userSelection = ClientUtils.getUserSelection(gameList.size(),true);
+
+        if (userSelection == ClientUtils.USER_SELECTED_QUIT) {
+            return;
+        }
+        DTOGameData selectedGame = gameList.get(userSelection);
+
+        //select team
+        DTOTeam selectedTeam = null;
+        do {
+            System.out.println(SELECT_TEAM);
+            userSelection = ClientUtils.getUserSelection(selectedGame.getDtoTeams().size(), true);
+
+            if (userSelection == ClientUtils.USER_SELECTED_QUIT) {
+                return;
+            }
+            selectedTeam = selectedGame.getDtoTeams().get(userSelection);
+
+            if (isTeamFull(selectedTeam)){
+                System.out.println(TEAM_IS_FULL);
+                selectedTeam = null;
+            }
+        } while (selectedTeam == null);
+
+
+        //Select role
+        Role roleSelected = null;
+        do {
+            System.out.println(SELECT_ROLE);
+            for (Role role : Role.values()) {
+                System.out.println(role.getNumber() + ") " + role.toString());
+            }
+
+            userSelection = ClientUtils.getUserSelection(Role.values().length, true);
+            if (userSelection == ClientUtils.USER_SELECTED_QUIT) {
+                return;
+            }
+
+            roleSelected = Role.values()[userSelection];
+            if (!isRoleAvailable(roleSelected, selectedTeam)) {
+                System.out.println(ROLE_UNAVAILABLE);
+                roleSelected = null;
+            }
+        }while (roleSelected == null);
+
+        registerGame(selectedGame,selectedTeam,roleSelected);
+    }
+
+    private boolean isTeamFull(DTOTeam t){
+        return (t.getNumRegisteredDefiners()==t.getNumRequiredDefiners() && t.getNumRegisteredGuessers()==t.getNumRequiredGuessers());
+    }
+
+    private boolean isRoleAvailable(Role role,DTOTeam team){
+        switch (role){
+            case DEFINER:
+                return team.getNumRegisteredDefiners()!= team.getNumRequiredDefiners();
+            case GUESSER:
+                return team.getNumRegisteredGuessers()!= team.getNumRequiredGuessers();
+            default:
+                return false;
+        }
+    }
+
+    private void registerGame(DTOGameData game, DTOTeam team, Role role) throws IOException {
+
+        RequestBody body = new FormBody.Builder()
+                .add("gameName", game.getGameName())
+                .add("teamName", team.getName())
+                .add("role", role.name())
+                .build();
+
+        Request request = new Request.Builder()
+                .url(JOIN_GAME)
+                .post(body)
+                .build();
+
+        try {
+            executeRequest(request);
+            GamePlay activeGamePlay = new GamePlay(game.getNumCards()+ game.getNumBlackCards(),team,role, HTTP_CLIENT, playerName);
+        }catch (IOException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+
+    private void exit(){
+
+        Request request = new Request.Builder()
+                .url(PLAYER_LOGOUT)
+                .get()
+                .build();
+
+        try{
+            System.out.println(executeRequest(request));
+            System.out.println(EXIT_MESSAGE);
+        } catch (IOException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
 }

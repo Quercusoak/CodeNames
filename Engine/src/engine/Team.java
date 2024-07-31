@@ -1,6 +1,11 @@
 package engine;
 
+import dto.Role;
+
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class Team implements Serializable {
     public Team(String name, int numCards, int definers, int guessers){
@@ -12,6 +17,19 @@ public class Team implements Serializable {
         numTurnsPlayed = 0;
         numRegisteredDefiners = 0;
         numRegisteredGuessers = 0;
+        players = new HashMap<>(numRequiredDefiners+numRequiredGuessers);
+    }
+
+    public Team(Team t){
+        name=t.name;
+        numberOfCards=t.numberOfCards;
+        numRequiredDefiners=t.numRequiredDefiners;
+        numRequiredGuessers=t.numRequiredGuessers;
+        score=t.score;
+        numTurnsPlayed=t.numTurnsPlayed;
+        numRegisteredDefiners=t.numRegisteredDefiners;
+        numRegisteredGuessers=t.numRegisteredGuessers;
+        players=t.players;
     }
 
     private final String name;
@@ -30,10 +48,10 @@ public class Team implements Serializable {
     private final int numRequiredGuessers;
     public int getNumRequiredGuessers() {return numRequiredGuessers;}
 
-    private final int numRegisteredDefiners;
+    private int numRegisteredDefiners;
     public int getNumRegisteredDefiners() {return numRegisteredDefiners;}
 
-    private final int numRegisteredGuessers;
+    private int numRegisteredGuessers;
     public int getNumRegisteredGuessers() {return numRegisteredGuessers;}
 
     private int score;
@@ -51,5 +69,50 @@ public class Team implements Serializable {
     }
     public void incTurnCounter() {
         numTurnsPlayed++;
+    }
+
+    private final Map<Player, Role> players;
+
+    public boolean addPlayer(Player player, Role role){
+        boolean playerAdded = false;
+
+        if (players.size()>=numRequiredDefiners+numRequiredGuessers){
+            return false;
+        }
+
+        switch (role.getNumber()){
+            case 1:
+                if (numRegisteredDefiners<numRequiredDefiners){
+                    players.put(player, role);
+                    numRegisteredDefiners++;
+                    playerAdded = true;
+                }
+                break;
+            case 2:
+                if (numRegisteredGuessers<numRequiredGuessers){
+                    players.put(player, role);
+                    numRegisteredGuessers++;
+                    playerAdded = true;
+                }
+                break;
+            default:
+                break;
+        }
+        return playerAdded;
+    }
+
+    public void setTeamOUtOfGame(String reasonGameOver){
+        players.keySet().forEach(p-> {
+            p.setGameOver(reasonGameOver);
+        });
+        clearTeam();
+    }
+
+    public void clearTeam(){
+        players.clear();
+        numRegisteredDefiners = 0;
+        numRegisteredGuessers = 0;
+        score =0;
+        numTurnsPlayed = 0;
     }
 }

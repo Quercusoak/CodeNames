@@ -1,29 +1,27 @@
 package engine;
 
+import dto.*;
 import engine.jaxb.generated.ECNTeam;
 import exception.*;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import dto.*;
 import engine.jaxb.generated.ECNGame;
 
 public class GameLogic implements Engine, Serializable {
 
-    private GameData gameData = null;
-    private GameSession game = null;
-
     private final static String JAXB_XML_GAME_PACKAGE_NAME = "engine.jaxb.generated";
     private final static String REGEX_TO_EXCLUDE_FROM_DICTIONARY = "[ \\n\\t\\r]";
     private final static String CHARS_TO_REMOVE_FROM_DICTIONARY = "[^\\p{L}]";
+
 
     @Override
     public GameData readGameFile(String XMLpath) {
@@ -73,88 +71,99 @@ public class GameLogic implements Engine, Serializable {
         /*Get teams*/
         List<Team> teams = getTeamsFromXML(ecnGame.getECNTeams().getECNTeam(), numWords);
 
-        /*Keep collection of all game words, not just those in current game.*/
-        GameData mgameData = new GameData();
-        mgameData.setGameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), dictionaryFileName);
-
-        return mgameData;
+        return new GameData(dictinary, teams,numWords,numBlackWords,rows,columns, ecnGame.getName(), ecnGame.getECNDictionaryFile());
     }
 
-    public FileParams displayGameParameters(){
-        if (gameData==null){
-            throw new NoFileLoadedException();
-        }
-        return new FileParams(gameData);
+    private DTOGameData getDTOGameDataFromGame(GameData game) {
+
+        List<DTOTeam> teams = new ArrayList<>();
+        game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
+
+        return new DTOGameData(game.getGameName(), game.getGameStatus(), game.getDictionaryFileName(), game.getDictionaryWords().size(),
+                game.getNumCards(), game.getNumBlackCards(), game.getRows(), game.getColumns(), teams);
     }
 
-    public void startGame(){
-        if (gameData==null){
-            throw new NoFileLoadedException();
-        }
-        game = new GameSession(gameData.getRows(), gameData.getColumns(), gameData.getTeams());
+    public DTOActiveGame getActiveGameFromGame(GameSession game) {
+
+        List<DTOTeam> teams = new ArrayList<>();
+        game.getTeams().forEach(t -> teams.add(getDTOTeamFromTeam(t)));
+
+        int indexCurrTeam = game.getGameStatus().equals(GameStatus.ACTIVE)? game.getTeams().indexOf(game.getPlayingTeam()) : 0;
+
+        return new DTOActiveGame(game.getGameStatus(),getGameBoard(game), teams, indexCurrTeam, game.getDefinition());
+    }
+
+    public void startGame(GameData game){
+
+        game.newActiveGameSession();
 
         /*Generate cards for game session*/
-        generateCards();
+        generateCards(game);
 
         /*Put cards in board*/
         int i=0;
-        for (GameCard card : game.getCards()){
+        for (GameCard card : game.getGameSession().getCards()){
             card.setCardNumber(i+1);
-            game.getBoard()[i / gameData.getColumns()][i % gameData.getColumns()]=card;
+            game.getGameSession().getBoard()[i / game.getColumns()][i % game.getColumns()]=card;
             i++;
         }
     }
 
-    private void generateCards(){
+    private void generateCards(GameData game){
         /*Generate cards for game session*/
         boolean isBlack = true;
 
-        List<String> dict = gameData.getDictionaryWords();
+        List<String> dict = game.getDictionaryWords();
         Collections.shuffle(dict);
 
         //Partition dictionary into two lists - cards and black cards
         Map<Boolean, List<String>> partitioned = dict.stream()
                 .distinct()
-                .limit(gameData.getCardsCount()+ gameData.getBlackCardsCount())
-                .collect(Collectors.partitioningBy(i -> dict.indexOf(i) < gameData.getCardsCount()));
+                .limit(game.getNumCards()+ game.getNumBlackCards())
+                .collect(Collectors.partitioningBy(i -> dict.indexOf(i) < game.getNumCards()));
 
         List<String> currGameCards = partitioned.get(true);
         List<String> currGameBlackCards = partitioned.get(false);
 
-        currGameBlackCards.forEach(a->game.addCard(a,isBlack));
+        currGameBlackCards.forEach(a->game.getGameSession().addCard(a,isBlack));
 
         /*Assign to teams and create cards*/
         int count=0;
         for (Team team : game.getTeams()){
             IntStream.range(count,team.getNumberOfCards() + count)
                     .mapToObj(currGameCards::get)
-                    .forEach(a->game.addCard(a,team,!isBlack));
+                    .forEach(a->game.getGameSession().addCard(a,team,!isBlack));
 
             count=count+team.getNumberOfCards();
         }
 
         /*Rest of words are neutral*/
-        IntStream.range(count,gameData.getCardsCount())
+        IntStream.range(count,game.getNumCards())
                 .mapToObj(currGameCards::get)
-                .forEach(a->game.addCard(a,!isBlack));
+                .forEach(a->game.getGameSession().addCard(a,!isBlack));
     }
 
-    public DTOBoard getGameBoard(){
+    public DTOBoard getGameBoard(GameSession game){
         if (game==null){
             throw new GameInactiveException();
         }
-        return new DTOBoard(game.getBoard(), gameData.getRows(), gameData.getColumns(),game.getCards().size());
-    }
 
-    public DTOTeam getCurrentTeam(){
-        if (game==null){
-            throw new GameInactiveException();
+        GameCard[][] board = game.getBoard();
+        List<DTOCard> cards =  new ArrayList<>();
+        int rows = game.getRows(), columns = game.getColumns();
+        for (int i = 0; i < Math.min((rows * columns), game.getCards().size()); i++) {
+            GameCard card = board[i / columns][i % columns];
+            cards.add(i, new DTOCard(card.getWord(),
+                    card.getTeam() == null ? null : getDTOTeamFromTeam(card.getTeam()),
+                    card.isBlack(),card.getCardNumber(), card.isFound()
+            ));
         }
-        return new DTOTeam(game.getPlayingTeam());
+
+        return new DTOBoard(cards, game.getRows(), game.getColumns());
     }
 
     @Override
-    public TurnStatus playTurn(Integer cardNum) {
+    public TurnStatus playTurn(int cardNum,GameSession game) {
         if (game==null){
             throw new GameInactiveException();
         }
@@ -163,7 +172,7 @@ public class GameLogic implements Engine, Serializable {
             throw new CardSelectionOutOfBound(game.getCards().size());
         }
 
-        GameCard card = game.getBoard()[cardNum / gameData.getColumns()][cardNum % gameData.getColumns()];
+        GameCard card = game.getBoard()[cardNum / game.getColumns()][cardNum % game.getColumns()];
 
         /*Check if card was found already*/
         if (card.isFound()){
@@ -197,27 +206,28 @@ public class GameLogic implements Engine, Serializable {
             guessStatus = TurnGuessStatus.NEUTRAL;
         }
 
-        return new TurnStatus(guessStatus,teamWhoseCardItIs);
+        return new TurnStatus(guessStatus,teamWhoseCardItIs==null? null : getDTOTeamFromTeam(teamWhoseCardItIs));
     }
 
     @Override
-    public void turnEnd() {
+    public void turnEnd(GameSession game) {
         /*Increment teams turn count*/
         game.getPlayingTeam().incTurnCounter();
         /*Increment current team to next:*/
         game.nextTeam();
+        if (game.getCurrentRole().equals(Role.GUESSER)){
+            game.setCurrentRole(Role.DEFINER);
+        }
     }
 
-    public TeamsList getTeams(){
-        return new TeamsList(game.getTeams());
-    }
 
     private List<String> getWordsFromXML(String ecnDictionaryFile, int numCardsinGame){
         /*Get the words from ECN-Dictionary-File*/
         Set<String> dictionary = new HashSet<>();
+        Path pathDict = Paths.get(ecnDictionaryFile);
         try (BufferedReader in = new BufferedReader(
                 new InputStreamReader(
-                        Files.newInputStream(Paths.get(ecnDictionaryFile))))) {
+                        Files.newInputStream(pathDict)))) {
 
             in.lines()
                     .forEach(s-> dictionary.addAll(Arrays.stream(s
@@ -227,8 +237,10 @@ public class GameLogic implements Engine, Serializable {
                             .map(String::toLowerCase)
                             .distinct()
                             .collect(Collectors.toList())));
+        } catch (java.nio.file.NoSuchFileException e){
+            throw new RuntimeException("Dictionary file not found.");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
 
         /*Check if there are enough words to start game with specified card amount.*/
@@ -278,5 +290,14 @@ public class GameLogic implements Engine, Serializable {
         ecnTeams.forEach(t -> teams.add(new Team(t.getName(), t.getCardsCount(), t.getDefiners(),t.getGuessers())));
 
         return teams;
+    }
+
+    private DTOTeam getDTOTeamFromTeam(Team t){
+        return new DTOTeam(t.getName(),t.getNumberOfCards(), t.getScore(), t.getNumTurnsPlayed(), t.getNumRequiredDefiners(),
+                 t.getNumRegisteredDefiners(), t.getNumRequiredGuessers(),t.getNumRegisteredGuessers());
+    }
+
+    public List<DTOGameData> displayGameParameters(List<GameData> gameDataList){
+        return gameDataList.stream().map(this::getDTOGameDataFromGame).collect(Collectors.toList());
     }
 }

@@ -2,23 +2,25 @@ package engine;
 
 import dto.*;
 
+import java.util.List;
+
 public interface Engine
 {
     /*recieves full path, always displayed*/
     GameData readGameFile(String XMLpath);
 
     /*Only displayed when file successfully loaded*/
-    FileParams displayGameParameters();
+    List<DTOGameData> displayGameParameters(List<GameData> gameDataList);
 
-    void startGame();
+    void startGame(GameData game);
 
-    TurnStatus playTurn(Integer cardNum);
+    TurnStatus playTurn(int cardNum, GameSession game);
 
-    void turnEnd();
+    void turnEnd(GameSession game);
 
-    DTOBoard getGameBoard();
+    //DTOBoard getGameBoard(GameData game);
 
-    DTOTeam getCurrentTeam();
+    //Team getCurrentTeam(GameData game);
 
-    TeamsList getTeams();
+//    TeamsList getTeams();
 }
